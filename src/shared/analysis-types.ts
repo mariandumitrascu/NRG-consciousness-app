@@ -319,3 +319,379 @@ export enum EffectSizeInterpretation {
     MEDIUM = 'medium',           // 0.5 <= d < 0.8
     LARGE = 'large'              // d >= 0.8
 }
+
+// Historical Analysis Types
+export interface TimeRange {
+    startTime: number;
+    endTime: number;
+    label?: string;
+}
+
+export interface SessionFilter {
+    intentionTypes: string[];
+    minDuration?: number;
+    maxDuration?: number;
+    minTrials?: number;
+    maxTrials?: number;
+    participantIds?: string[];
+    status?: string[];
+}
+
+export interface IntentionFilter {
+    type: 'high' | 'low' | 'baseline';
+    minDuration?: number;
+    significance?: number;
+}
+
+export interface AnalysisTest {
+    type: 'z-score' | 'chi-square' | 'kolmogorov-smirnov' | 't-test' | 'bayesian';
+    parameters?: Record<string, any>;
+}
+
+export interface GroupingCriteria {
+    temporal: 'hour' | 'day' | 'week' | 'month' | 'year';
+    intentional: boolean;
+    participant: boolean;
+    session: boolean;
+}
+
+export interface ComparisonDataset {
+    type: 'baseline' | 'control' | 'historical' | 'peer';
+    parameters?: Record<string, any>;
+}
+
+export interface AnalysisConfig {
+    timeRange: TimeRange;
+    sessionFilter: SessionFilter;
+    intentionFilter: IntentionFilter[];
+    statisticalTests: AnalysisTest[];
+    groupBy: GroupingCriteria;
+    compareWith: ComparisonDataset;
+}
+
+// Meta-Analysis Types
+export interface MetaAnalysisProps {
+    sessions: ExperimentSession[];
+    analysisType: 'fixedEffect' | 'randomEffect' | 'mixed';
+    weightingMethod: 'sampleSize' | 'inverseVariance' | 'quality';
+    heterogeneityTest: boolean;
+    forestPlot: boolean;
+}
+
+export interface EffectSizeData {
+    sessionId: string;
+    effectSize: number;
+    standardError: number;
+    confidenceInterval: [number, number];
+    weight: number;
+    sampleSize: number;
+}
+
+export interface MetaAnalysisResult {
+    pooledEffectSize: number;
+    pooledStandardError: number;
+    pooledConfidenceInterval: [number, number];
+    heterogeneityQ: number;
+    heterogeneityI2: number;
+    heterogeneityPValue: number;
+    individualEffects: EffectSizeData[];
+    forestPlotData: ForestPlotData;
+}
+
+export interface ForestPlotData {
+    studies: EffectSizeData[];
+    pooledResult: EffectSizeData;
+    xAxisRange: [number, number];
+    significanceLevel: number;
+}
+
+// Advanced Filtering Types
+export interface TemporalFilter {
+    dateRange?: TimeRange;
+    timeOfDay?: { start: string; end: string };
+    dayOfWeek?: number[];
+    monthOfYear?: number[];
+}
+
+export interface ExperimentFilter {
+    sessionTypes: string[];
+    intentionTypes: string[];
+    durationRange?: { min: number; max: number };
+    trialCountRange?: { min: number; max: number };
+}
+
+export interface StatisticalFilter {
+    significanceLevel?: number;
+    effectSizeRange?: { min: number; max: number };
+    pValueRange?: { min: number; max: number };
+}
+
+export interface QualityFilter {
+    minCompleteness: number;
+    minConsistency: number;
+    maxErrorRate: number;
+    randomnessTest: boolean;
+}
+
+export interface CustomFilter {
+    field: string;
+    operator: 'equals' | 'notEquals' | 'greaterThan' | 'lessThan' | 'contains' | 'range';
+    value: any;
+}
+
+export interface FilterCriteria {
+    temporal: TemporalFilter;
+    experimental: ExperimentFilter;
+    statistical: StatisticalFilter;
+    quality: QualityFilter;
+    custom: CustomFilter[];
+}
+
+// Comparison Analysis Types
+export interface ComparisonMetric {
+    name: string;
+    type: 'mean' | 'median' | 'std' | 'effectSize' | 'significance';
+    parameters?: Record<string, any>;
+}
+
+export interface ComparisonAnalysis {
+    sessions: ExperimentSession[];
+    comparisonMetrics: ComparisonMetric[];
+    statisticalTests: StatisticalTest[];
+    adjustForMultiple: boolean;
+    visualizationType: 'table' | 'chart' | 'heatmap';
+}
+
+export interface StatisticalTest {
+    name: string;
+    type: 'parametric' | 'nonParametric' | 'bayesian';
+    assumptions: string[];
+    parameters?: Record<string, any>;
+}
+
+// Report Generation Types
+export interface ReportTemplate {
+    name: string;
+    sections: ReportSection[];
+    style: ReportStyle;
+    format: 'html' | 'pdf' | 'docx';
+}
+
+export interface ReportSection {
+    type: 'summary' | 'methods' | 'results' | 'discussion' | 'appendix';
+    title: string;
+    content: string;
+    charts?: ChartConfig[];
+    tables?: TableConfig[];
+}
+
+export interface ReportStyle {
+    theme: 'scientific' | 'professional' | 'minimal';
+    fontSize: number;
+    lineSpacing: number;
+    margins: { top: number; right: number; bottom: number; left: number };
+}
+
+export interface ChartConfig {
+    type: 'line' | 'bar' | 'scatter' | 'heatmap' | 'forest';
+    data: any[];
+    options: Record<string, any>;
+    title: string;
+    caption?: string;
+}
+
+export interface TableConfig {
+    columns: TableColumn[];
+    data: any[];
+    title: string;
+    caption?: string;
+    formatting?: TableFormatting;
+}
+
+export interface TableColumn {
+    key: string;
+    label: string;
+    type: 'string' | 'number' | 'date' | 'boolean';
+    format?: string;
+    alignment?: 'left' | 'center' | 'right';
+}
+
+export interface TableFormatting {
+    alternateRows: boolean;
+    headerStyle: 'bold' | 'underline' | 'background';
+    borderStyle: 'none' | 'light' | 'medium' | 'heavy';
+}
+
+export interface ReportConfig {
+    template: ReportTemplate;
+    timeRange: TimeRange;
+    includeSections: ReportSection[];
+    statisticalLevel: 'basic' | 'intermediate' | 'advanced';
+    exportFormat: 'pdf' | 'html' | 'docx';
+    includeRawData: boolean;
+}
+
+// Export Types
+export interface ExportOptions {
+    format: 'csv' | 'json' | 'xlsx' | 'matlab' | 'r' | 'spss';
+    dataLevel: 'raw' | 'processed' | 'summary';
+    includeMetadata: boolean;
+    anonymize: boolean;
+    compression: boolean;
+}
+
+export interface DataPackage {
+    metadata: DataPackageMetadata;
+    datasets: Dataset[];
+    analyses: AnalysisResult[];
+    documentation: Documentation[];
+}
+
+export interface DataPackageMetadata {
+    title: string;
+    description: string;
+    version: string;
+    created: Date;
+    creator: string;
+    keywords: string[];
+    methodology: string;
+}
+
+export interface Dataset {
+    name: string;
+    description: string;
+    format: string;
+    data: any[];
+    schema: DataSchema[];
+}
+
+export interface DataSchema {
+    field: string;
+    type: string;
+    description: string;
+    units?: string;
+    constraints?: Record<string, any>;
+}
+
+export interface Documentation {
+    type: 'methodology' | 'analysis' | 'replication' | 'citation';
+    title: string;
+    content: string;
+    references?: Reference[];
+}
+
+export interface Reference {
+    type: 'journal' | 'book' | 'conference' | 'website';
+    authors: string[];
+    title: string;
+    year: number;
+    journal?: string;
+    volume?: string;
+    pages?: string;
+    doi?: string;
+    url?: string;
+}
+
+// Quality Assessment Types
+export interface QualityMetrics {
+    completeness: number;
+    consistency: number;
+    accuracy: number;
+    reliability: number;
+    validity: number;
+}
+
+export interface QualityAssessment {
+    sessionId: string;
+    metrics: QualityMetrics;
+    issues: QualityIssue[];
+    recommendations: string[];
+    overallScore: number;
+    passesThreshold: boolean;
+}
+
+export interface QualityIssue {
+    type: 'missing_data' | 'inconsistent_data' | 'statistical_anomaly' | 'timing_issue';
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+    affectedData: string[];
+    suggestedAction: string;
+}
+
+// Research Hypothesis Types
+export interface ResearchHypothesis {
+    question: string;
+    prediction: string;
+    rationale: string;
+    testMethod: StatisticalTest;
+    powerAnalysis: PowerCalculation;
+    sampleSizeNeeded: number;
+}
+
+export interface PowerCalculation {
+    effectSize: number;
+    alpha: number;
+    beta: number;
+    power: number;
+    sampleSize: number;
+    testType: string;
+}
+
+// Bayesian Analysis Types
+export interface BayesianResult {
+    posteriorMean: number;
+    posteriorSD: number;
+    credibleInterval: [number, number];
+    bayesFactor: number;
+    priorDistribution: PriorDistribution;
+    posteriorDistribution: PosteriorDistribution;
+}
+
+export interface PriorDistribution {
+    type: 'normal' | 'uniform' | 'beta' | 'gamma';
+    parameters: Record<string, number>;
+}
+
+export interface PosteriorDistribution {
+    type: 'normal' | 'beta' | 'gamma';
+    parameters: Record<string, number>;
+    samples?: number[];
+}
+
+export interface BayesFactorResult {
+    bf10: number;
+    bf01: number;
+    interpretation: 'extreme_evidence' | 'very_strong' | 'strong' | 'moderate' | 'weak' | 'inconclusive';
+    hypothesis: string;
+}
+
+// Sequential Analysis Types
+export interface SequentialAnalysisResult {
+    currentN: number;
+    boundaryType: 'efficacy' | 'futility' | 'continue';
+    efficacyBoundary: number;
+    futilityBoundary: number;
+    currentTestStatistic: number;
+    pValue: number;
+    recommendation: 'stop_efficacy' | 'stop_futility' | 'continue';
+    nextAnalysisAt?: number;
+}
+
+// Learning Curve Types
+export interface LearningCurveData {
+    sessionNumber: number;
+    timestamp: number;
+    performance: number;
+    cumulativePerformance: number;
+    learningRate: number;
+    skillLevel: 'novice' | 'intermediate' | 'advanced' | 'expert';
+}
+
+export interface LearningCurveAnalysis {
+    data: LearningCurveData[];
+    overallLearningRate: number;
+    plateauDetected: boolean;
+    plateauStart?: number;
+    improvementTrend: 'increasing' | 'decreasing' | 'stable';
+    predictedPlateau: number;
+}

@@ -1,0 +1,466 @@
+.historical-analysis {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Loading States */
+.historical-analysis.loading {
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e3e6ea;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Header */
+.analysis-header {
+    padding: 2rem;
+    background: white;
+    border-bottom: 2px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.analysis-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.analysis-header .subtitle {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Controls */
+.analysis-controls {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Tabs */
+.analysis-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tab-navigation {
+    display: flex;
+    background: white;
+    border-bottom: 2px solid #e9ecef;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.tab-navigation::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border: none;
+    background: none;
+    color: #6c757d;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    color: #495057;
+    background: #f8f9fa;
+}
+
+.tab-button.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background: #f8f9fa;
+}
+
+.tab-icon {
+    font-size: 1.1rem;
+}
+
+.tab-label {
+    font-weight: 500;
+}
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.analysis-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Overview Panel */
+.overview-panel {
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.overview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #6c757d;
+    font-size: 1.1rem;
+    background: white;
+    border-radius: 8px;
+    margin: 2rem;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.summary-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.card-value.quality-excellent {
+    color: #28a745;
+}
+
+.card-value.quality-good {
+    color: #17a2b8;
+}
+
+.card-value.quality-fair {
+    color: #ffc107;
+}
+
+.card-value.quality-poor {
+    color: #dc3545;
+}
+
+.card-detail {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Key Findings & Recommendations */
+.key-findings,
+.recommendations {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    margin-bottom: 1.5rem;
+}
+
+.key-findings h3,
+.recommendations h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.key-findings h3::before {
+    content: "🔍";
+    font-size: 1.1rem;
+}
+
+.recommendations h3::before {
+    content: "💡";
+    font-size: 1.1rem;
+}
+
+.key-findings ul,
+.recommendations ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.key-findings li,
+.recommendations li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+    color: #495057;
+    position: relative;
+}
+
+.key-findings li::before {
+    content: "•";
+    color: #007bff;
+    font-weight: bold;
+    position: absolute;
+    left: -1rem;
+}
+
+.recommendations li::before {
+    content: "→";
+    color: #28a745;
+    font-weight: bold;
+    position: absolute;
+    left: -1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analysis-header {
+        padding: 1.5rem;
+    }
+
+    .analysis-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .analysis-controls {
+        padding: 1rem 1.5rem;
+    }
+
+    .overview-panel {
+        padding: 1.5rem;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .summary-card {
+        padding: 1.25rem;
+    }
+
+    .card-value {
+        font-size: 1.875rem;
+    }
+
+    .tab-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .tab-icon {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .analysis-header {
+        padding: 1rem;
+    }
+
+    .analysis-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .analysis-header .subtitle {
+        font-size: 1rem;
+    }
+
+    .tab-button .tab-label {
+        display: none;
+    }
+
+    .tab-button {
+        padding: 0.75rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .summary-card {
+        border: 2px solid #000;
+    }
+
+    .tab-button.active {
+        border-bottom-width: 4px;
+    }
+
+    .card-value.quality-excellent,
+    .card-value.quality-good,
+    .card-value.quality-fair,
+    .card-value.quality-poor {
+        color: #000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation: none;
+    }
+
+    .summary-card,
+    .tab-button {
+        transition: none;
+    }
+
+    .summary-card:hover {
+        transform: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .historical-analysis {
+        background: #1a1a1a;
+        color: #e9ecef;
+    }
+
+    .analysis-header,
+    .analysis-controls,
+    .tab-navigation {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    .analysis-header h1 {
+        color: #ffffff;
+    }
+
+    .analysis-header .subtitle {
+        color: #adb5bd;
+    }
+
+    .summary-card,
+    .key-findings,
+    .recommendations {
+        background: #2d2d2d;
+        border-color: #404040;
+        color: #e9ecef;
+    }
+
+    .summary-card h3 {
+        color: #adb5bd;
+    }
+
+    .card-value {
+        color: #ffffff;
+    }
+
+    .card-detail {
+        color: #adb5bd;
+    }
+
+    .tab-button {
+        color: #adb5bd;
+    }
+
+    .tab-button:hover {
+        color: #e9ecef;
+        background: #404040;
+    }
+
+    .tab-button.active {
+        color: #40a9ff;
+        background: #404040;
+        border-bottom-color: #40a9ff;
+    }
+
+    .overview-placeholder {
+        background: #2d2d2d;
+        color: #adb5bd;
+    }
+
+    .loading-overlay {
+        background: #2d2d2d;
+        color: #e9ecef;
+    }
+
+    .spinner {
+        border-color: #404040;
+        border-top-color: #40a9ff;
+    }
+}
