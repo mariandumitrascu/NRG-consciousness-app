@@ -1,0 +1,195 @@
+/**
+ * Scientific Card Component Styles
+ * Professional content container styling
+ */
+
+.card {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+/* Card variants */
+.card--default {
+    border-color: var(--color-border);
+}
+
+.card--highlighted {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.1), var(--shadow-sm);
+}
+
+.card--warning {
+    border-color: var(--color-warning);
+    background-color: rgba(217, 119, 6, 0.02);
+}
+
+.card--error {
+    border-color: var(--color-error);
+    background-color: rgba(220, 38, 38, 0.02);
+}
+
+.card--success {
+    border-color: var(--color-success);
+    background-color: rgba(5, 150, 105, 0.02);
+}
+
+/* Interactive cards */
+.card--interactive {
+    cursor: pointer;
+}
+
+.card--interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.card--interactive:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), var(--shadow-md);
+}
+
+.card--interactive:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Padding variants */
+.card--padding-none {
+    padding: 0;
+}
+
+.card--padding-small .card__header,
+.card--padding-small .card__content {
+    padding: var(--spacing-sm);
+}
+
+.card--padding-medium .card__header,
+.card--padding-medium .card__content {
+    padding: var(--spacing-md);
+}
+
+.card--padding-large .card__header,
+.card--padding-large .card__content {
+    padding: var(--spacing-lg);
+}
+
+/* Header */
+.card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card__header-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.card__title {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    line-height: 1.4;
+}
+
+.card__subtitle {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+.card__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+/* Content */
+.card__content {
+    /* Padding is handled by the padding variants above */
+}
+
+/* Cards without headers */
+.card:not(:has(.card__header)) .card__content {
+    border-top: none;
+}
+
+/* Nested cards spacing */
+.card .card {
+    margin-top: var(--spacing-md);
+}
+
+.card .card:first-child {
+    margin-top: 0;
+}
+
+/* Card lists */
+.card-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.card-list .card {
+    margin: 0;
+}
+
+/* Card grid */
+.card-grid {
+    display: grid;
+    gap: var(--spacing-md);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+
+    .card__actions {
+        justify-content: flex-start;
+    }
+
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card--padding-large .card__header,
+    .card--padding-large .card__content {
+        padding: var(--spacing-md);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .card {
+        border-width: 2px;
+    }
+
+    .card--highlighted {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .card {
+        transition: none;
+    }
+
+    .card--interactive:hover {
+        transform: none;
+    }
+}

@@ -1,0 +1,206 @@
+/**
+ * Main Navigation Component Styles
+ * Scientific sidebar navigation with collapsible design
+ */
+
+.navigation {
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+    min-width: 280px;
+    height: 100vh;
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    transition: all var(--transition-medium);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.navigation--collapsed {
+    width: 60px;
+    min-width: 60px;
+}
+
+/* Header */
+.navigation__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    min-height: 4rem;
+}
+
+.navigation--collapsed .navigation__header {
+    justify-content: center;
+    padding: var(--spacing-lg) var(--spacing-sm);
+}
+
+.navigation__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.navigation__logo-icon {
+    font-size: var(--font-size-xl);
+    flex-shrink: 0;
+}
+
+.navigation__logo-text {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+}
+
+.navigation__trial-count {
+    flex-shrink: 0;
+}
+
+/* Navigation Items */
+.navigation__items {
+    flex: 1;
+    padding: var(--spacing-md) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.navigation--collapsed .navigation__items {
+    padding: var(--spacing-md) var(--spacing-xs);
+}
+
+/* Footer */
+.navigation__footer {
+    border-top: 1px solid var(--color-border);
+    padding: var(--spacing-md);
+    background-color: var(--color-background);
+}
+
+/* Session Info */
+.navigation__session-info {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background-color: var(--color-surface);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.navigation__session-title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-xs);
+}
+
+.navigation__session-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+}
+
+.navigation__session-trials {
+    font-family: var(--font-monospace);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+/* System Status */
+.navigation__system-status {
+    /* Session info already provides margin-bottom for spacing */
+}
+
+.navigation__status-title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-sm);
+}
+
+.navigation__status-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.navigation__status-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+}
+
+.navigation__status-item span:first-child {
+    color: var(--color-text-secondary);
+}
+
+/* Scrollbar styling */
+.navigation::-webkit-scrollbar {
+    width: 4px;
+}
+
+.navigation::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.navigation::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--border-radius-sm);
+}
+
+.navigation::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .navigation {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 200;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .navigation.navigation--open {
+        transform: translateX(0);
+    }
+
+    .navigation--collapsed {
+        width: 280px;
+        min-width: 280px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .navigation {
+        border-right-width: 2px;
+    }
+
+    .navigation__header,
+    .navigation__footer {
+        border-width: 2px 0;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .navigation {
+        transition: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    .navigation {
+        display: none;
+    }
+}
