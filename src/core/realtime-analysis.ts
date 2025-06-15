@@ -36,20 +36,20 @@ export class RealtimeAnalysis {
         const newMean = newSum / newCount;
 
         // Update running variance using Welford's online algorithm
-        const delta = newTrial.result - currentStats.mean;
-        const delta2 = newTrial.result - newMean;
+        const delta = newTrial.trialValue - currentStats.mean;
+        const delta2 = newTrial.trialValue - newMean;
         const newVariance = newCount > 1 ?
             ((currentStats.count - 1) * currentStats.variance + delta * delta2) / (newCount - 1) : 0;
 
         const newStandardDeviation = Math.sqrt(newVariance);
 
         // Update cumulative deviation
-        const deviation = newTrial.result - expectedMean;
+        const deviation = newTrial.trialValue - expectedMean;
         const newCumulativeDeviation = currentStats.cumulativeDeviation + deviation;
 
         // Update min/max values
-        const newMinValue = Math.min(currentStats.minValue, newTrial.result);
-        const newMaxValue = Math.max(currentStats.maxValue, newTrial.result);
+        const newMinValue = Math.min(currentStats.minValue, newTrial.trialValue);
+        const newMaxValue = Math.max(currentStats.maxValue, newTrial.trialValue);
 
         return {
             count: newCount,
@@ -89,21 +89,21 @@ export class RealtimeAnalysis {
         // Calculate initial cumulative values if we're starting from middle
         if (startIndex > 0) {
             for (let i = 0; i < startIndex; i++) {
-                const deviation = trials[i].result - expectedMean;
+                const deviation = trials[i].trialValue - expectedMean;
                 cumulativeDeviation += deviation;
-                runningSum += trials[i].result;
-                sumOfSquares += trials[i].result * trials[i].result;
+                runningSum += trials[i].trialValue;
+                sumOfSquares += trials[i].trialValue * trials[i].trialValue;
             }
         }
 
         // Generate points for visualization
         for (let i = startIndex; i < trials.length; i += step) {
             const trial = trials[i];
-            const deviation = trial.result - expectedMean;
+            const deviation = trial.trialValue - expectedMean;
 
             cumulativeDeviation += deviation;
-            runningSum += trial.result;
-            sumOfSquares += trial.result * trial.result;
+            runningSum += trial.trialValue;
+            sumOfSquares += trial.trialValue * trial.trialValue;
 
             const n = i + 1;
             const runningMean = runningSum / n;
@@ -140,7 +140,7 @@ export class RealtimeAnalysis {
 
         const expectedMean = 100;
         const expectedStd = Math.sqrt(50);
-        const observedMean = StatisticalUtils.mean(trials.map(t => t.result));
+        const observedMean = StatisticalUtils.mean(trials.map(t => t.trialValue));
         const standardError = expectedStd / Math.sqrt(trials.length);
 
         // Calculate Z-score
@@ -202,7 +202,7 @@ export class RealtimeAnalysis {
 
         for (let i = windowSize; i <= trials.length; i += Math.floor(windowSize / 4)) {
             const windowTrials = trials.slice(i - windowSize, i);
-            const windowMean = StatisticalUtils.mean(windowTrials.map(t => t.result));
+            const windowMean = StatisticalUtils.mean(windowTrials.map(t => t.trialValue));
             const avgTime = StatisticalUtils.mean(windowTrials.map(t => t.timestamp.getTime()));
 
             windowMeans.push(windowMean - expectedMean); // Deviation from expected
@@ -270,7 +270,7 @@ export class RealtimeAnalysis {
             };
         }
 
-        const results = trials.map(t => t.result);
+        const results = trials.map(t => t.trialValue);
         const timestamps = trials.map(t => t.timestamp);
 
         // Randomness assessment
@@ -499,7 +499,7 @@ export class RealtimeAnalysis {
         const duplicates = this.countDuplicates(trials);
 
         // Detect outliers
-        const outliers = this.detectOutliers(trials.map(t => t.result));
+        const outliers = this.detectOutliers(trials.map(t => t.trialValue));
 
         return {
             missingData: 0, // Would need expected trial count to calculate
@@ -538,7 +538,7 @@ export class RealtimeAnalysis {
         let duplicates = 0;
 
         for (const trial of trials) {
-            const key = `${trial.result}-${trial.timestamp.getTime()}`;
+            const key = `${trial.trialValue}-${trial.timestamp.getTime()}`;
             if (seen.has(key)) {
                 duplicates++;
             } else {

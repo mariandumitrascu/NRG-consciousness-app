@@ -113,7 +113,7 @@ const initialState: AppState = {
   modalOpen: null,
   error: null,
   loading: {
-    app: true,
+    app: false,
     engine: false,
     database: false,
     session: false
