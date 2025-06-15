@@ -1,0 +1,258 @@
+/**
+ * Navigation Button Component Styles
+ * Individual navigation item styling with active states
+ */
+
+.nav-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: transparent;
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+    font-family: inherit;
+    margin: 0 var(--spacing-sm);
+}
+
+.nav-button:hover {
+    background-color: rgba(37, 99, 235, 0.08);
+    transform: translateX(2px);
+}
+
+.nav-button:focus {
+    outline: none;
+    background-color: rgba(37, 99, 235, 0.08);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.nav-button:active {
+    transform: translateX(1px);
+}
+
+/* Active state */
+.nav-button--active {
+    background-color: rgba(37, 99, 235, 0.12);
+    color: var(--color-primary);
+}
+
+.nav-button--active:hover {
+    background-color: rgba(37, 99, 235, 0.16);
+}
+
+/* Collapsed state */
+.nav-button--collapsed {
+    margin: 0 var(--spacing-xs);
+    padding: var(--spacing-sm);
+    justify-content: center;
+}
+
+.nav-button--collapsed:hover {
+    transform: scale(1.05);
+}
+
+/* Disabled state */
+.nav-button--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Button content */
+.nav-button__content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    min-width: 0;
+}
+
+.nav-button--collapsed .nav-button__content {
+    justify-content: center;
+}
+
+/* Icon */
+.nav-button__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-lg);
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Text content */
+.nav-button__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.nav-button--collapsed .nav-button__text {
+    display: none;
+}
+
+.nav-button__label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-button__description {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-button--active .nav-button__label {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Badge */
+.nav-button__badge {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.nav-button--collapsed .nav-button__badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+}
+
+/* Active indicator */
+.nav-button__indicator {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background-color: var(--color-primary);
+    border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+    opacity: 0;
+    animation: indicator-appear 0.2s ease-out forwards;
+}
+
+@keyframes indicator-appear {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%) scaleY(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(-50%) scaleY(1);
+    }
+}
+
+.nav-button--collapsed .nav-button__indicator {
+    display: none;
+}
+
+/* Tooltip for collapsed state */
+.nav-button--collapsed {
+    position: relative;
+}
+
+.nav-button--collapsed:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-text-primary);
+    color: var(--color-background);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    opacity: 0;
+    animation: tooltip-appear 0.2s ease-out 0.5s forwards;
+}
+
+.nav-button--collapsed:hover::before {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 2px;
+    border: 4px solid transparent;
+    border-right-color: var(--color-text-primary);
+    z-index: 1000;
+    opacity: 0;
+    animation: tooltip-appear 0.2s ease-out 0.5s forwards;
+}
+
+@keyframes tooltip-appear {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .nav-button {
+        border: 1px solid transparent;
+    }
+
+    .nav-button:hover,
+    .nav-button:focus {
+        border-color: var(--color-primary);
+    }
+
+    .nav-button--active {
+        border-color: var(--color-primary);
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .nav-button {
+        transition: none;
+    }
+
+    .nav-button:hover {
+        transform: none;
+    }
+
+    .nav-button--collapsed:hover {
+        transform: none;
+    }
+
+    .nav-button__indicator {
+        animation: none;
+        opacity: 1;
+        transform: translateY(-50%) scaleY(1);
+    }
+
+    .nav-button--collapsed:hover::after,
+    .nav-button--collapsed:hover::before {
+        animation: none;
+        opacity: 1;
+    }
+}
