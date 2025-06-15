@@ -22,7 +22,8 @@
         "lint:fix": "eslint src --ext .ts,.tsx --fix",
         "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
         "typecheck": "tsc --noEmit",
-        "demo": "npx ts-node src/core/demo.ts"
+        "demo": "npx ts-node src/core/demo.ts",
+        "demo:database": "npx ts-node src/database/demo.ts"
     },
     "dependencies": {
         "@types/better-sqlite3": "^7.6.13",

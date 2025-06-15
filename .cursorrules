@@ -69,7 +69,7 @@
 - Maintain inline comments for complex algorithms
 - Document all database schema changes
 - Include scientific references for statistical methods
-- After each task, update the file `CHANGELOG.md` with changes made, chronologically ordered
+- IMPORTANT: After each task, update the file `CHANGELOG.md` with changes made, chronologically ordered
 - Maintain a README.md with project overview, setup instructions, and usage guidelines
 
 ## Testing Strategy
@@ -120,3 +120,4 @@
 - Implement cumulative deviation calculations correctly
 - Support both intention-based and continuous monitoring modes
 - Maintain scientific rigor in all calculations and displays
+- IMPORTANT: After each task, update the file `CHANGELOG.md` with changes made, chronologically ordered
