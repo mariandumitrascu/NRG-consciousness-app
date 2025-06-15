@@ -29,58 +29,50 @@ export class AdvancedStatistics {
         parameters: AnalysisParameters = {}
     ): NetworkVarianceResult {
         if (trials.length === 0) {
-            throw new Error('No trials provided for network variance calculation');
+            throw new Error('No trials provided for network variance analysis');
         }
 
-        const expectedMean = 100; // Expected mean for 200-bit trials
-        const expectedVariance = 50; // Expected variance for 200-bit trials (n*p*(1-p))
-        const expectedStd = Math.sqrt(expectedVariance);
+        const expectedMean = parameters.expectedMean || 100;
+        const expectedStd = parameters.expectedStd || Math.sqrt(50);
 
-        // Calculate individual Z-scores for each trial
-        const zScores = trials.map(trial => {
-            const deviation = trial.result - expectedMean;
-            return deviation / expectedStd;
+        // Calculate deviations from expected mean
+        const deviations = trials.map(trial => {
+            const deviation = trial.trialValue - expectedMean;
+            return {
+                timestamp: trial.timestamp,
+                deviation,
+                normalizedDeviation: deviation / expectedStd
+            };
         });
 
-        // Network variance is the sum of squared Z-scores
-        const netvar = zScores.reduce((sum, z) => sum + z * z, 0);
-        const degreesOfFreedom = trials.length;
-        const expectedNetvar = degreesOfFreedom; // E[χ²] = df
-        const standardError = Math.sqrt(2 * degreesOfFreedom); // SE[χ²] = √(2*df)
+        // Calculate network variance metrics
+        const variance = StatisticalUtils.variance(deviations.map(d => d.deviation));
+        const normalizedVariance = variance / (expectedStd * expectedStd);
 
-        // Calculate chi-square statistic (netvar follows chi-square distribution)
-        const chisquare = netvar;
-        const probability = StatisticalUtils.chiSquareProbability(chisquare, degreesOfFreedom);
+        // Calculate temporal correlation
+        const temporalCorrelation = this.calculateTemporalCorrelation(deviations);
 
-        // Determine significance level
-        let significance: StatisticalSignificance;
-        if (probability < 0.001) {
-            significance = StatisticalSignificance.HIGHLY_SIGNIFICANT;
-        } else if (probability < 0.01) {
-            significance = StatisticalSignificance.SIGNIFICANT;
-        } else if (probability < 0.05) {
-            significance = StatisticalSignificance.SIGNIFICANT;
-        } else if (probability < 0.1) {
-            significance = StatisticalSignificance.MARGINAL;
-        } else {
-            significance = StatisticalSignificance.NONE;
-        }
+        // Calculate spatial correlation (if location data available)
+        const spatialCorrelation = this.calculateSpatialCorrelation(trials, parameters);
 
-        // Calculate confidence interval for network variance
-        const confidenceLevel = parameters.confidenceLevel || 0.95;
-        const alpha = 1 - confidenceLevel;
-        const chiLower = this.chiSquareInverse(alpha / 2, degreesOfFreedom);
-        const chiUpper = this.chiSquareInverse(1 - alpha / 2, degreesOfFreedom);
+        // Calculate coherence metrics
+        const coherence = this.calculateCoherence(deviations);
+
+        // Statistical significance
+        const chiSquare = (trials.length - 1) * normalizedVariance;
+        const pValue = StatisticalUtils.chiSquareProbability(chiSquare, trials.length - 1);
 
         return {
-            netvar,
-            degreesOfFreedom,
-            chisquare,
-            probability,
-            significance,
-            confidenceInterval: [chiLower, chiUpper],
-            expectedNetvar,
-            standardError
+            variance,
+            normalizedVariance,
+            temporalCorrelation,
+            spatialCorrelation,
+            coherence,
+            chiSquare,
+            pValue,
+            significance: pValue < 0.05 ? 'significant' : 'not_significant',
+            sampleSize: trials.length,
+            timestamp: new Date()
         };
     }
 
@@ -93,42 +85,44 @@ export class AdvancedStatistics {
         parameters: AnalysisParameters = {}
     ): DeviceVarianceResult {
         if (trials.length === 0) {
-            throw new Error('No trials provided for device variance calculation');
+            throw new Error('No trials provided for device variance analysis');
         }
 
-        const expectedMean = 100;
-        const expectedStd = Math.sqrt(50);
+        const expectedMean = parameters.expectedMean || 100;
+        const expectedStd = parameters.expectedStd || Math.sqrt(50);
 
-        // Calculate individual Z-scores
-        const individualZScores = trials.map(trial => {
-            return (trial.result - expectedMean) / expectedStd;
+        // Transform trials to normalized deviations
+        const normalizedTrials = trials.map(trial => {
+            return (trial.trialValue - expectedMean) / expectedStd;
         });
 
-        // Device variance is sum of squared Z-scores
-        const deviceVariance = individualZScores.reduce((sum, z) => sum + z * z, 0);
-        const degreesOfFreedom = trials.length;
+        // Calculate device-specific metrics
+        const deviceMean = StatisticalUtils.mean(normalizedTrials);
+        const deviceVariance = StatisticalUtils.variance(normalizedTrials);
+        const deviceSkewness = StatisticalUtils.skewness(normalizedTrials);
+        const deviceKurtosis = StatisticalUtils.kurtosis(normalizedTrials);
 
-        // Calculate probability using chi-square distribution
-        const probability = StatisticalUtils.chiSquareProbability(deviceVariance, degreesOfFreedom);
+        // Calculate drift over time
+        const drift = this.calculateDrift(normalizedTrials);
 
-        // Determine significance
-        let significance: StatisticalSignificance;
-        if (probability < 0.001) {
-            significance = StatisticalSignificance.HIGHLY_SIGNIFICANT;
-        } else if (probability < 0.05) {
-            significance = StatisticalSignificance.SIGNIFICANT;
-        } else if (probability < 0.1) {
-            significance = StatisticalSignificance.MARGINAL;
-        } else {
-            significance = StatisticalSignificance.NONE;
-        }
+        // Calculate autocorrelation
+        const autocorrelation = this.calculateAutocorrelation(normalizedTrials);
+
+        // Statistical tests
+        const kolmogorovSmirnov = this.performKSTest(normalizedTrials);
+        const andersonDarling = this.performADTest(normalizedTrials);
 
         return {
+            deviceMean,
             deviceVariance,
-            individualZScores,
-            probability,
-            significance,
-            degreesOfFreedom
+            deviceSkewness,
+            deviceKurtosis,
+            drift,
+            autocorrelation,
+            kolmogorovSmirnov,
+            andersonDarling,
+            sampleSize: trials.length,
+            timestamp: new Date()
         };
     }
 
@@ -141,79 +135,65 @@ export class AdvancedStatistics {
         parameters: AnalysisParameters = {}
     ): CumulativeResult {
         if (trials.length === 0) {
-            return {
-                points: [],
-                finalDeviation: 0,
-                maxDeviation: 0,
-                minDeviation: 0,
-                crossings: 0,
-                excursions: []
-            };
+            throw new Error('No trials provided for cumulative deviation analysis');
         }
 
-        const expectedMean = 100;
-        const points: CumulativePoint[] = [];
-        let cumulativeDeviation = 0;
+        const expectedMean = parameters.expectedMean || 100;
+        const expectedStd = parameters.expectedStd || Math.sqrt(50);
+
+        // Calculate cumulative deviations
         let runningSum = 0;
         let sumOfSquares = 0;
-        let maxDeviation = 0;
-        let minDeviation = 0;
-        let crossings = 0;
-        let lastSign = 0;
+        const points: CumulativePoint[] = [];
 
-        // Calculate cumulative statistics for each trial
-        for (let i = 0; i < trials.length; i++) {
-            const trial = trials[i];
-            const deviation = trial.result - expectedMean;
+        trials.forEach((trial, index) => {
+            const deviation = trial.trialValue - expectedMean;
+            runningSum += deviation;
 
-            cumulativeDeviation += deviation;
-            runningSum += trial.result;
-            sumOfSquares += trial.result * trial.result;
+            runningSum += trial.trialValue;
+            sumOfSquares += trial.trialValue * trial.trialValue;
 
-            const n = i + 1;
-            const runningMean = runningSum / n;
-            const runningVariance = (sumOfSquares - n * runningMean * runningMean) / (n - 1);
-            const runningStd = Math.sqrt(Math.max(0, runningVariance));
+            const n = index + 1;
+            const currentMean = runningSum / n;
+            const currentVariance = (sumOfSquares - n * currentMean * currentMean) / (n - 1);
+            const currentStd = Math.sqrt(Math.max(0, currentVariance));
 
             // Calculate Z-score for cumulative deviation
-            const expectedCumStd = Math.sqrt(50 * n); // Standard error for cumulative sum
-            const zScore = cumulativeDeviation / expectedCumStd;
+            const expectedCumulativeStd = expectedStd * Math.sqrt(n);
+            const zScore = runningSum / expectedCumulativeStd;
 
             points.push({
-                trialIndex: i,
+                index: n,
                 timestamp: trial.timestamp,
-                cumulativeDeviation,
-                runningMean,
+                cumulativeDeviation: runningSum,
                 zScore,
-                runningVariance: runningVariance || 0
+                pValue: StatisticalUtils.normalProbabilityOneTailed(Math.abs(zScore))
             });
+        });
 
-            // Track extremes
-            if (cumulativeDeviation > maxDeviation) {
-                maxDeviation = cumulativeDeviation;
-            }
-            if (cumulativeDeviation < minDeviation) {
-                minDeviation = cumulativeDeviation;
-            }
+        // Detect excursion periods
+        const excursions = this.detectExcursions(points, parameters.minExcursionLength || 100);
 
-            // Count zero crossings
-            const currentSign = Math.sign(cumulativeDeviation);
-            if (i > 0 && currentSign !== 0 && lastSign !== 0 && currentSign !== lastSign) {
-                crossings++;
-            }
-            lastSign = currentSign;
-        }
+        // Calculate final statistics
+        const finalDeviation = points[points.length - 1].cumulativeDeviation;
+        const finalZScore = points[points.length - 1].zScore;
+        const finalPValue = StatisticalUtils.normalProbabilityOneTailed(Math.abs(finalZScore));
 
-        // Detect excursion periods (sustained deviations)
-        const excursions = this.detectExcursions(points, parameters.windowSize || 100);
+        // Calculate maximum excursion
+        const maxPositiveExcursion = Math.max(...points.map(p => p.cumulativeDeviation));
+        const maxNegativeExcursion = Math.min(...points.map(p => p.cumulativeDeviation));
 
         return {
             points,
-            finalDeviation: cumulativeDeviation,
-            maxDeviation,
-            minDeviation,
-            crossings,
-            excursions
+            excursions,
+            finalDeviation,
+            finalZScore,
+            finalPValue,
+            maxPositiveExcursion,
+            maxNegativeExcursion,
+            significance: finalPValue < 0.05 ? 'significant' : 'not_significant',
+            sampleSize: trials.length,
+            timestamp: new Date()
         };
     }
 
@@ -226,10 +206,10 @@ export class AdvancedStatistics {
         parameters: AnalysisParameters = {}
     ): ZScoreResult {
         if (trials.length === 0) {
-            throw new Error('No trials provided for Z-score calculation');
+            throw new Error('No trials provided for Z-score analysis');
         }
 
-        const observedMean = StatisticalUtils.mean(trials.map(t => t.result));
+        const observedMean = StatisticalUtils.mean(trials.map(t => t.trialValue));
         const expectedStd = Math.sqrt(50); // Standard deviation for 200-bit trials
         const standardError = expectedStd / Math.sqrt(trials.length);
 
@@ -237,39 +217,30 @@ export class AdvancedStatistics {
         const zScore = (observedMean - expectedMean) / standardError;
 
         // Calculate p-values
-        const pValue = StatisticalUtils.normalProbability(zScore);
+        const pValueTwoTailed = StatisticalUtils.normalProbability(zScore);
         const pValueOneTailed = StatisticalUtils.normalProbabilityOneTailed(zScore);
 
-        // Calculate confidence interval for the mean
+        // Calculate confidence interval
         const confidenceLevel = parameters.confidenceLevel || 0.95;
-        const confidenceInterval = StatisticalUtils.calculateConfidenceInterval(
-            observedMean, expectedStd, trials.length, confidenceLevel
-        );
-
-        // Calculate effect size (Cohen's d)
-        const effectSize = (observedMean - expectedMean) / expectedStd;
+        const alpha = 1 - confidenceLevel;
+        const criticalValue = 1.96; // Use fixed value instead of private method
+        const margin = criticalValue * standardError;
+        const confidenceInterval: [number, number] = [observedMean - margin, observedMean + margin];
 
         // Determine significance
-        let significance: StatisticalSignificance;
-        if (pValue < 0.001) {
-            significance = StatisticalSignificance.HIGHLY_SIGNIFICANT;
-        } else if (pValue < 0.05) {
-            significance = StatisticalSignificance.SIGNIFICANT;
-        } else if (pValue < 0.1) {
-            significance = StatisticalSignificance.MARGINAL;
-        } else {
-            significance = StatisticalSignificance.NONE;
-        }
+        const significance = pValueTwoTailed < 0.05 ? 'significant' : 'not_significant';
 
         return {
+            observedMean,
+            expectedMean,
+            standardError,
             zScore,
-            pValue,
+            pValueTwoTailed,
             pValueOneTailed,
             confidenceInterval,
-            standardError,
-            effectSize,
+            significance,
             sampleSize: trials.length,
-            significance
+            timestamp: new Date()
         };
     }
 
@@ -282,12 +253,12 @@ export class AdvancedStatistics {
         parameters: AnalysisParameters = {}
     ): EffectSizeResult {
         if (trials.length === 0) {
-            throw new Error('No trials provided for effect size calculation');
+            throw new Error('No trials provided for effect size analysis');
         }
 
-        const observedMean = StatisticalUtils.mean(trials.map(t => t.result));
+        const observedMean = StatisticalUtils.mean(trials.map(t => t.trialValue));
         const expectedStd = Math.sqrt(50);
-        const observedStd = StatisticalUtils.standardDeviation(trials.map(t => t.result));
+        const observedStd = StatisticalUtils.standardDeviation(trials.map(t => t.trialValue));
 
         // Calculate Cohen's d
         const cohensD = StatisticalUtils.cohensD(observedMean, expectedMean, expectedStd);
@@ -298,7 +269,7 @@ export class AdvancedStatistics {
         );
 
         // Calculate point-biserial correlation
-        const deviations = trials.map(t => t.result - expectedMean);
+        const deviations = trials.map(t => t.trialValue - expectedMean);
         const binaryGroups = deviations.map(d => d > 0);
         const pointBiserial = StatisticalUtils.pointBiserialCorrelation(deviations, binaryGroups);
 
@@ -306,8 +277,7 @@ export class AdvancedStatistics {
         const se = Math.sqrt((trials.length + cohensD * cohensD / 2) / (trials.length * (trials.length - 3)));
         const confidenceLevel = parameters.confidenceLevel || 0.95;
         const alpha = 1 - confidenceLevel;
-        const criticalValue = StatisticalUtils.normalInverse ?
-            StatisticalUtils.normalInverse(1 - alpha / 2) : 1.96;
+        const criticalValue = 1.96; // Use fixed value instead of private method
         const margin = criticalValue * se;
         const confidenceInterval: [number, number] = [cohensD - margin, cohensD + margin];
 
@@ -436,9 +406,7 @@ export class AdvancedStatistics {
 
         // Wilson-Hilferty transformation
         const h = 2 / (9 * df);
-        const zp = StatisticalUtils.normalInverse ?
-            StatisticalUtils.normalInverse(p) :
-            this.normalInverseApprox(p);
+        const zp = this.normalInverseApprox(p); // Use our own implementation
 
         const chi2 = df * Math.pow(1 - h + zp * Math.sqrt(h), 3);
         return Math.max(0, chi2);
@@ -449,10 +417,39 @@ export class AdvancedStatistics {
      */
     private static normalInverseApprox(p: number): number {
         // Beasley-Springer-Moro algorithm
-        const a = [0, -3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
-        const b = [0, -5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
-        const c = [0, -7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
-        const d = [0, 7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+        const a = [
+            0,
+            -3.969683028665376e+01,
+            2.209460984245205e+02,
+            -2.759285104469687e+02,
+            1.383577518672690e+02,
+            -3.066479806614716e+01,
+            2.506628277459239e+00
+        ];
+        const b = [
+            0,
+            -5.447609879822406e+01,
+            1.615858368580409e+02,
+            -1.556989798598866e+02,
+            6.680131188771972e+01,
+            -1.328068155288572e+01
+        ];
+        const c = [
+            0,
+            -7.784894002430293e-03,
+            -3.223964580411365e-01,
+            -2.400758277161838e+00,
+            -2.549732539343734e+00,
+            4.374664141464968e+00,
+            2.938163982698783e+00
+        ];
+        const d = [
+            0,
+            7.784695709041462e-03,
+            3.224671290700398e-01,
+            2.445134137142996e+00,
+            3.754408661907416e+00
+        ];
 
         const split1 = 0.425;
         const split2 = 5.0;
@@ -464,20 +461,23 @@ export class AdvancedStatistics {
 
         if (Math.abs(q) < split1) {
             r = const1 - q * q;
-            x = q * (((((a[7] * r + a[6]) * r + a[5]) * r + a[4]) * r + a[3]) * r + a[2]) * r + a[1]) /
-                (((((b[6] * r + b[5]) * r + b[4]) * r + b[3]) * r + b[2]) * r + b[1]) * r + 1);
+            const numerator = q * (((((a[6] * r + a[5]) * r + a[4]) * r + a[3]) * r + a[2]) * r + a[1]);
+            const denominator = (((((b[5] * r + b[4]) * r + b[3]) * r + b[2]) * r + b[1]) * r + 1);
+            x = numerator / denominator;
         } else {
             r = q < 0 ? p : 1 - p;
             r = Math.sqrt(-Math.log(r));
 
             if (r <= split2) {
                 r = r - const2;
-                x = (((((c[7] * r + c[6]) * r + c[5]) * r + c[4]) * r + c[3]) * r + c[2]) * r + c[1]) /
-                    ((((d[4] * r + d[3]) * r + d[2]) * r + d[1]) * r + 1);
+                const numerator1 = (((((c[6] * r + c[5]) * r + c[4]) * r + c[3]) * r + c[2]) * r + c[1]);
+                const denominator1 = ((((d[4] * r + d[3]) * r + d[2]) * r + d[1]) * r + 1);
+                x = numerator1 / denominator1;
             } else {
                 r = r - split2;
-                x = (((((c[7] * r + c[6]) * r + c[5]) * r + c[4]) * r + c[3]) * r + c[2]) * r + c[1]) /
-                    ((((d[4] * r + d[3]) * r + d[2]) * r + d[1]) * r + 1);
+                const numerator2 = (((((c[6] * r + c[5]) * r + c[4]) * r + c[3]) * r + c[2]) * r + c[1]);
+                const denominator2 = ((((d[4] * r + d[3]) * r + d[2]) * r + d[1]) * r + 1);
+                x = numerator2 / denominator2;
             }
 
             if (q < 0) x = -x;

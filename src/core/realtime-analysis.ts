@@ -29,8 +29,8 @@ export class RealtimeAnalysis {
     static updateRunningStats(newTrial: RNGTrial, currentStats: RunningStats): RunningStats {
         const expectedMean = 100;
         const newCount = currentStats.count + 1;
-        const newSum = currentStats.sum + newTrial.result;
-        const newSumOfSquares = currentStats.sumOfSquares + (newTrial.result * newTrial.result);
+        const newSum = currentStats.sum + newTrial.trialValue;
+        const newSumOfSquares = currentStats.sumOfSquares + (newTrial.trialValue * newTrial.trialValue);
 
         // Update running mean using online algorithm
         const newMean = newSum / newCount;

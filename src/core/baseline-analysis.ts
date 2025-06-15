@@ -33,7 +33,7 @@ export class BaselineAnalysis {
             };
         }
 
-        const values = trials.map(t => t.result);
+        const values = trials.map(t => t.trialValue);
         const tests: RandomnessTest[] = [];
 
         // 1. Frequency Test (Monobit Test)
@@ -124,8 +124,8 @@ export class BaselineAnalysis {
             throw new Error('No current trials provided');
         }
 
-        const baselineValues = calibrationTrials.map(t => t.result);
-        const currentValues = currentTrials.map(t => t.result);
+        const baselineValues = calibrationTrials.map(t => t.trialValue);
+        const currentValues = currentTrials.map(t => t.trialValue);
 
         // Calculate baseline statistics
         const baselineMean = StatisticalUtils.mean(baselineValues);
@@ -212,7 +212,7 @@ export class BaselineAnalysis {
             );
 
             if (periodTrials.length >= 10) {
-                const periodMean = StatisticalUtils.mean(periodTrials.map(t => t.result));
+                const periodMean = StatisticalUtils.mean(periodTrials.map(t => t.trialValue));
                 periods.push({
                     time: time + periodMs / 2, // Midpoint of period
                     mean: periodMean,
@@ -282,8 +282,8 @@ export class BaselineAnalysis {
             throw new Error('Both intention and control trials required for comparison');
         }
 
-        const intentionValues = intentionTrials.map(t => t.result);
-        const controlValues = controlTrials.map(t => t.result);
+        const intentionValues = intentionTrials.map(t => t.trialValue);
+        const controlValues = controlTrials.map(t => t.trialValue);
 
         // Calculate means and standard deviations
         const intentionMean = StatisticalUtils.mean(intentionValues);

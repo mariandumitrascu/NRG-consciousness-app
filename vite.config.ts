@@ -11,10 +11,12 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            '@': resolve(__dirname, 'src'),
-            '@/components': resolve(__dirname, 'src/components'),
-            '@/core': resolve(__dirname, 'src/core'),
-            '@/database': resolve(__dirname, 'src/database'),
+            '@': resolve(__dirname, 'src/renderer'),
+            '@/components': resolve(__dirname, 'src/renderer/components'),
+            '@/store': resolve(__dirname, 'src/renderer/store'),
+            '@/hooks': resolve(__dirname, 'src/renderer/hooks'),
+            '@/views': resolve(__dirname, 'src/renderer/views'),
+            '@/styles': resolve(__dirname, 'src/renderer/styles'),
             '@/shared': resolve(__dirname, 'src/shared')
         }
     },
