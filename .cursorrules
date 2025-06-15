@@ -1,0 +1,122 @@
+# Personal RNG Consciousness Experiment App - Development Guidelines
+
+## Architecture & Technology Stack
+
+- **Frontend**: TypeScript + React with strict type checking
+- **Desktop Framework**: Electron for cross-platform desktop application
+- **Database**: SQLite for local data storage and persistence
+- **Visualization**: Chart.js or Recharts for scientific data visualization
+- **Architecture**: Modular design with clear separation of concerns
+
+## Code Quality Standards
+
+### TypeScript
+
+- Use strict TypeScript configuration
+- Prefer explicit types over `any`
+- Use interfaces for complex data structures
+- Implement proper error handling with Result types or try-catch blocks
+
+### React
+
+- Use functional components with hooks
+- Implement proper state management (Context API or lightweight state management)
+- Follow React best practices for performance optimization
+- Use proper prop typing with TypeScript interfaces
+
+### Scientific Accuracy
+
+- All statistical calculations must be mathematically correct
+- Implement proper random number generation using macOS native APIs
+- Ensure data integrity with comprehensive validation
+- Include proper error bounds and uncertainty calculations
+- Document all mathematical formulas and their sources
+
+### Database Operations
+
+- Use prepared statements for all SQLite operations
+- Implement proper database migrations
+- Ensure data consistency and ACID compliance
+- Handle database errors gracefully
+
+## UI/UX Guidelines
+
+- **Design Philosophy**: Clean, minimal, research-focused interface
+- **Avoid**: Flashy animations, distracting elements, consumer app patterns
+- **Focus**: Data clarity, scientific precision, ease of use for researchers
+- **Colors**: Professional, neutral palette suitable for extended research sessions
+- **Typography**: Clear, readable fonts optimized for data display
+
+## Error Handling
+
+- Comprehensive error boundaries in React components
+- Proper error logging and user feedback
+- Graceful degradation when components fail
+- Database connection error handling
+- File system operation error handling
+
+## Data Validation
+
+- Validate all user inputs at the interface level
+- Implement server-side validation for all data operations
+- Sanitize data before database storage
+- Validate statistical calculations and flag anomalies
+
+## Documentation Requirements
+
+- Document all public functions and classes
+- Include JSDoc comments for TypeScript functions
+- Maintain inline comments for complex algorithms
+- Document all database schema changes
+- Include scientific references for statistical methods
+- After each task, update the file `CHANGELOG.md` with changes made, chronologically ordered
+- Maintain a README.md with project overview, setup instructions, and usage guidelines
+
+## Testing Strategy
+
+- Unit tests for all core functionality
+- Integration tests for database operations
+- End-to-end tests for critical user workflows
+- Statistical validation tests for RNG and analysis functions
+- Performance tests for high-frequency data operations
+
+## Performance Considerations
+
+- Optimize for 200-bit trials per second data generation
+- Implement efficient database batch operations
+- Use proper React optimization techniques (memo, useMemo, useCallback)
+- Optimize chart rendering for real-time data updates
+- Monitor memory usage for long-running experiments
+
+## Security & Privacy
+
+- Local-only data storage (no cloud dependencies)
+- Secure database access patterns
+- Protect against SQL injection
+- Validate file system operations
+- Ensure user data privacy
+
+## Development Workflow
+
+- Use feature branches for all development
+- Implement proper commit message conventions
+- Run linting and type checking before commits
+- Maintain changelog for scientific reproducibility
+- Use semantic versioning
+
+## Code Organization
+
+- Group related functionality in modules
+- Separate business logic from UI components
+- Use proper folder structure as defined in project layout
+- Implement proper import/export patterns
+- Follow consistent naming conventions
+
+## Specific Requirements for RNG Consciousness Research
+
+- Implement PEAR laboratory methodology accurately
+- Support Global Consciousness Project statistical approaches
+- Ensure proper randomness quality and testing
+- Implement cumulative deviation calculations correctly
+- Support both intention-based and continuous monitoring modes
+- Maintain scientific rigor in all calculations and displays
