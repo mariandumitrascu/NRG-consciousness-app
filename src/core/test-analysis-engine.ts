@@ -28,11 +28,12 @@ export class AnalysisEngineDemo {
             // Normal distribution around 100 with std 7.07 (sqrt(50))
             const result = this.generateNormalRandom(100, 7.07);
             randomTrials.push({
-                id: `random_${i}`,
                 sessionId: 'test_session_random',
                 timestamp: new Date(now.getTime() - (1000 - i) * 5), // 5ms intervals
-                result: Math.round(Math.max(0, Math.min(200, result))), // Clamp to valid range
-                metadata: {}
+                trialValue: Math.round(Math.max(0, Math.min(200, result))), // Clamp to valid range
+                experimentMode: 'session',
+                intention: null,
+                trialNumber: i + 1
             });
         }
 
@@ -41,11 +42,12 @@ export class AnalysisEngineDemo {
         for (let i = 0; i < 1000; i++) {
             const result = this.generateNormalRandom(102, 7.07); // 2-point bias
             biasedTrials.push({
-                id: `biased_${i}`,
                 sessionId: 'test_session_biased',
                 timestamp: new Date(now.getTime() - (1000 - i) * 5),
-                result: Math.round(Math.max(0, Math.min(200, result))),
-                metadata: {}
+                trialValue: Math.round(Math.max(0, Math.min(200, result))),
+                experimentMode: 'session',
+                intention: 'high',
+                trialNumber: i + 1
             });
         }
 
@@ -54,11 +56,12 @@ export class AnalysisEngineDemo {
         for (let i = 0; i < 500; i++) {
             const result = this.generateNormalRandom(100, 7.07);
             controlTrials.push({
-                id: `control_${i}`,
                 sessionId: 'test_session_control',
                 timestamp: new Date(now.getTime() - (500 - i) * 5),
-                result: Math.round(Math.max(0, Math.min(200, result))),
-                metadata: { period: 'control' }
+                trialValue: Math.round(Math.max(0, Math.min(200, result))),
+                experimentMode: 'session',
+                intention: 'baseline',
+                trialNumber: i + 1
             });
         }
 
@@ -67,11 +70,12 @@ export class AnalysisEngineDemo {
         for (let i = 0; i < 500; i++) {
             const result = this.generateNormalRandom(101.5, 7.07); // Small effect
             intentionTrials.push({
-                id: `intention_${i}`,
                 sessionId: 'test_session_intention',
                 timestamp: new Date(now.getTime() - (500 - i) * 5),
-                result: Math.round(Math.max(0, Math.min(200, result))),
-                metadata: { period: 'intention' }
+                trialValue: Math.round(Math.max(0, Math.min(200, result))),
+                experimentMode: 'session',
+                intention: 'high',
+                trialNumber: i + 1
             });
         }
 

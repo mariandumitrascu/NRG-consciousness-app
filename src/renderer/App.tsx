@@ -3,30 +3,71 @@
  * Integrates all UI components with routing and state management
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, ErrorInfo, Component } from 'react';
 import { AppProvider, useAppContext } from './store/AppContext';
 import Header from './components/Layout/Header';
 import MainNavigation from './components/Navigation/MainNavigation';
 import Dashboard from './views/Dashboard/Dashboard';
+import SessionModeView from './views/SessionMode/SessionModeView';
+import { ContinuousView } from './views/ContinuousMode/ContinuousView';
 
 // Import styles
 import './styles/globals.css';
 import './views/Dashboard/Dashboard.css';
 
-// Placeholder components for other views
-const SessionExperiments: React.FC = () => (
-  <div className="view-placeholder">
-    <h2>Session Experiments</h2>
-    <p>Intention-based RNG experiments coming in Phase 5</p>
-  </div>
-);
+// Error Boundary Component
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-const ContinuousMonitoring: React.FC = () => (
-  <div className="view-placeholder">
-    <h2>Continuous Monitoring</h2>
-    <p>24/7 consciousness monitoring coming in Phase 6</p>
-  </div>
-);
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          background: '#f5f5f5',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <h2>Something went wrong</h2>
+          <p>Error: {this.state.error?.message}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: undefined })}
+            style={{
+              padding: '10px 20px',
+              background: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const Analysis: React.FC = () => (
   <div className="view-placeholder">
@@ -57,11 +98,14 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const updateMockData = () => {
       dispatch({
-        type: 'UPDATE_RNG_STATUS',
+        type: 'SET_RNG_ENGINE_STATUS',
         payload: {
           isRunning: true,
           currentRate: 200.0 + (Math.random() - 0.5) * 10,
           targetRate: 200.0,
+          totalTrials: Math.floor(Math.random() * 10000) + 1000,
+          lastTrialTime: new Date(),
+          startTime: new Date(Date.now() - Math.random() * 3600000),
           memoryUsage: {
             current: 45.2 + Math.random() * 5,
             peak: 52.8 + Math.random() * 2
@@ -75,25 +119,27 @@ const AppContent: React.FC = () => {
       });
 
       dispatch({
-        type: 'UPDATE_DATABASE_STATUS',
+        type: 'SET_DATABASE_STATUS',
         payload: {
           connected: true,
+          version: '3.0.0',
           size: 125.4 + Math.random() * 0.1,
           lastBackup: new Date()
         }
       });
 
       dispatch({
-        type: 'UPDATE_SYSTEM_HEALTH',
+        type: 'SET_SYSTEM_HEALTH',
         payload: {
+          rngEngine: 'healthy',
+          database: 'healthy',
           overall: 'healthy',
           lastCheck: new Date()
         }
       });
 
       dispatch({
-        type: 'INCREMENT_TRIAL_COUNT',
-        payload: Math.floor(Math.random() * 3) + 1
+        type: 'INCREMENT_TRIAL_COUNT'
       });
     };
 
@@ -106,35 +152,62 @@ const AppContent: React.FC = () => {
     return () => clearInterval(interval);
   }, [dispatch]);
 
+  // Show loading state
+  if (state.loading.app) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: '#f5f5f5'
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   // Render the appropriate view based on current navigation
   const renderCurrentView = () => {
-    switch (state.currentView) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'sessions':
-        return <SessionExperiments />;
-      case 'monitoring':
-        return <ContinuousMonitoring />;
-      case 'analysis':
-        return <Analysis />;
-      case 'calibration':
-        return <Calibration />;
-      case 'history':
-        return <History />;
-      default:
-        return <Dashboard />;
+    try {
+      switch (state.currentView) {
+        case 'dashboard':
+          return <Dashboard />;
+        case 'session-mode':
+          return <SessionModeView />;
+        case 'continuous-mode':
+          return <ContinuousView />;
+        case 'analysis':
+          return <Analysis />;
+        case 'calibration':
+          return <Calibration />;
+        case 'history':
+          return <History />;
+        default:
+          return <Dashboard />;
+      }
+    } catch (error) {
+      console.error('Error rendering view:', error);
+      return (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <h2>Error loading view</h2>
+          <p>Please try refreshing the page</p>
+        </div>
+      );
     }
   };
 
   return (
     <div className="app">
-      <Header />
+      <Header title="RNG Consciousness Experiment" />
 
       <div className="app__main">
         <MainNavigation />
 
         <main className="app__content">
-          {renderCurrentView()}
+          <ErrorBoundary>
+            {renderCurrentView()}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
@@ -144,9 +217,11 @@ const AppContent: React.FC = () => {
 // Main App component with providers
 const App: React.FC = () => {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 };
 
