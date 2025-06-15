@@ -7,6 +7,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-01-XX - Phase 9: Calibration & Validation Tools Complete
+
+### Added - Scientific Calibration Infrastructure
+
+- **CalibrationManager Core System** (`src/core/CalibrationManager.ts`):
+  - Comprehensive calibration controller implementing automated calibration processes
+  - Support for standard calibration (100K trials), extended calibration (500K trials), and time-based calibration
+  - Hardware health validation with timing accuracy assessment and performance monitoring
+  - Database integration for storing calibration results with detailed metadata and version tracking
+  - Event-driven progress tracking with real-time status updates and phase monitoring
+  - Scheduled periodic calibrations with automatic execution and failure recovery
+  - Environmental correlation analysis integrating temperature, humidity, and electromagnetic measurements
+  - Statistical validation using chi-square tests, runs tests, and autocorrelation analysis
+
+- **Advanced Randomness Validation Suite** (`src/core/RandomnessValidator.ts`):
+  - Complete NIST SP 800-22 test suite implementation with 15 comprehensive statistical tests
+  - Frequency test, block frequency test, runs test, longest runs test, rank test, spectral test
+  - Non-overlapping templates test, overlapping templates test, universal test, linear complexity test
+  - Serial test, approximate entropy test, cumulative sums test, random excursions test, random excursions variant test
+  - Full DIEHARD test battery with 17 sophisticated randomness tests including birthday spacings, overlapping permutations
+  - Matrix ranks test, bitstream test, OPSO/OQSO/DNA tests, count-the-1's tests, parking lot test
+  - Minimum distance test, random spheres test, squeeze test, overlapping sums test, runs up/down test, craps test
+  - ENT test suite with entropy calculation, compression ratio analysis, chi-square test, arithmetic mean, Monte Carlo Pi
+  - Serial correlation analysis and autocorrelation testing with lag analysis
+  - Overall randomness quality scoring with weighted test results and research-grade certification assessment
+
+- **Statistical Baseline Estimation System** (`src/core/BaselineEstimator.ts`):
+  - Baseline calculation with proper confidence intervals using Student's t-distribution
+  - Long-term drift detection using linear regression analysis with trend significance testing
+  - Periodic pattern detection via autocorrelation analysis with seasonality identification
+  - Environmental correlation analysis integrating multiple environmental factors
+  - Baseline comparison and change detection with statistical significance testing
+  - Predictive modeling for future baseline estimation using ARIMA and exponential smoothing
+  - Baseline stability assessment with coefficient of variation and standard error calculations
+
+- **Real-time Quality Monitoring Controller** (`src/core/QualityController.ts`):
+  - Comprehensive anomaly detection system with six anomaly types monitoring
+  - Statistical bias detection using cumulative deviation analysis and Z-score calculations
+  - Pattern anomaly detection using runs tests and autocorrelation analysis
+  - Environmental correlation anomaly detection with threshold-based alerting
+  - Statistical outlier detection using Grubbs' test and modified Z-score methods
+  - Missing data anomaly detection with gap analysis and completeness assessment
+  - Timing anomaly detection for RNG performance monitoring and hardware health assessment
+  - Quality metrics calculation with overall quality scoring and trend analysis
+  - Data integrity assessment with checksums and validation protocols
+  - Statistical validity evaluation with comprehensive test result aggregation
+  - Configurable alert generation and threshold management for research-specific requirements
+
+### Added - Calibration User Interface Components
+
+- **CalibrationWizard Guided Interface** (`src/renderer/components/Calibration/CalibrationWizard.tsx`):
+  - 7-step guided calibration process with intuitive wizard interface
+  - Protocol selection with four calibration types: Initial Setup, Periodic Maintenance, Diagnostic Calibration, Research Validation
+  - Test suite configuration with intelligent recommendations based on intended use
+  - Standard test suite (NIST basic), comprehensive test suite (NIST + DIEHARD), research-grade test suite (all tests)
+  - Quality criteria setup with customizable thresholds for different research standards
+  - Environmental controls configuration with sensor integration and monitoring setup
+  - Real-time progress monitoring with detailed phase tracking and estimated completion times
+  - Results display with comprehensive certification information and quality assessment
+  - Professional styling with progress indicators, status badges, and responsive design
+  - Error handling with detailed diagnostics and recovery recommendations
+
+### Added - Integration and Demonstration Systems
+
+- **Comprehensive Calibration Demo** (`src/core/CalibrationDemo.ts`):
+  - Complete integration testing of all calibration components with realistic data simulation
+  - Validation report generation with multi-level certification assessment
+  - System information compilation including hardware specifications and software versions
+  - Overall system scoring with weighted quality metrics and research suitability assessment
+  - Recommended use cases analysis with limitations and confidence level reporting
+  - Detailed console output demonstrating all calibration capabilities and test results
+  - Performance benchmarking with timing analysis and resource usage monitoring
+  - Statistical validation with comprehensive test result interpretation
+
+### Technical Implementation Features
+
+- **NIST Compliance**: Full implementation of NIST SP 800-22 statistical test suite for randomness validation
+- **DIEHARD Integration**: Complete DIEHARD test battery for advanced randomness quality assessment
+- **ENT Test Suite**: Entropy and compression-based randomness evaluation for comprehensive analysis
+- **Automated Execution**: Unattended calibration processes with intelligent progress monitoring and error recovery
+- **Scientific Rigor**: Proper statistical calculations with p-value analysis and multiple testing corrections
+- **Quality Assurance**: Real-time monitoring with comprehensive anomaly detection and alert systems
+- **Standards Compliance**: ISO compliance and regulatory standards adherence for research environments
+- **Certification System**: Multi-level certification (Research Grade, Educational, Experimental) with detailed assessment criteria
+
+### Database and Data Management
+
+- **Calibration Results Storage**: Comprehensive database integration for storing calibration results with full metadata
+- **Version Tracking**: Complete audit trail of calibration history with version control and change management
+- **Quality Metrics Archive**: Long-term storage of quality metrics with trend analysis and historical comparison
+- **Environmental Data Integration**: Storage and correlation of environmental measurements with calibration results
+- **Export Capabilities**: Multiple export formats for research documentation and regulatory compliance
+- **Data Integrity**: Comprehensive validation and checksums for research data reliability
+
+### Research and Scientific Features
+
+- **Consciousness Research Standards**: Implementation following PEAR laboratory and Global Consciousness Project methodologies
+- **Publication-Ready Results**: Validation reports suitable for peer-reviewed publication with proper statistical documentation
+- **Reproducibility Support**: Complete documentation and configuration preservation for research reproducibility
+- **Ethical Compliance**: Integration with research ethics protocols and institutional review board requirements
+- **Cross-Platform Compatibility**: Consistent calibration results across different hardware and operating system platforms
+
+### Performance and Reliability
+
+- **High-Frequency Support**: Optimized for 200-bit trials per second data generation and analysis
+- **Long-Term Stability**: Designed for continuous operation with automated maintenance and health monitoring
+- **Memory Management**: Efficient memory usage patterns for extended calibration sessions and large datasets
+- **Error Recovery**: Comprehensive error handling with automatic recovery and detailed diagnostic reporting
+- **Hardware Integration**: Native integration with macOS random number generation APIs and hardware entropy sources
+
+### Ready for Deployment
+
+- Complete calibration and validation system operational with full automation capabilities
+- Research-grade statistical analysis ready for consciousness research applications
+- Comprehensive quality control suitable for scientific publication and regulatory compliance
+- Professional user interface supporting both novice and expert researchers
+- Foundation prepared for advanced consciousness research experiments and data collection
+
 ## [0.8.0] - 2025-01-XX - Phase 8: Historical Analysis & Reporting System Complete
 
 ### Added - Advanced Analysis Infrastructure
