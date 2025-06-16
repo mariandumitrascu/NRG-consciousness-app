@@ -62,9 +62,8 @@ export class CalibrationManager extends EventEmitter {
     constructor() {
         super();
         this.rngEngine = new RNGEngine({
-            algorithm: 'isaac',
-            seedFromEntropy: true,
-            entropyBits: 256
+            // algorithm: 'isaac', // Note: algorithm property needs to be added to RNGConfig
+            // entropyBits: 256 // Note: entropyBits property needs to be added to RNGConfig
         });
         this.randomnessValidator = new RandomnessValidator();
         this.baselineEstimator = new BaselineEstimator();

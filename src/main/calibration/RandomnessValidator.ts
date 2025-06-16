@@ -1,4 +1,7 @@
 import * as ss from 'simple-statistics';
+import { RNGTrial } from '../../shared/types';
+import { StatisticalResult } from '../../shared/types';
+import { StatisticalUtils } from '../../core/statistical-utils';
 
 export interface TestResult {
     name: string;
@@ -234,7 +237,7 @@ export class RandomnessValidator {
         const n = data.length;
         const ones = data.filter(b => b === 1).length;
         const S = Math.abs(2 * ones - n);
-        const pValue = Math.erfc(S / Math.sqrt(2 * n));
+        const pValue = StatisticalUtils.erfc(S / Math.sqrt(2 * n));
 
         return {
             name: 'Frequency (Monobit)',
@@ -259,7 +262,9 @@ export class RandomnessValidator {
         }
 
         chiSquared *= 4 * blockSize;
-        const pValue = ss.chiSquaredGoodnessOfFit(chiSquared, numBlocks - 1);
+        // Calculate p-value from chi-squared statistic and degrees of freedom
+        const degreesOfFreedom = numBlocks - 1;
+        const pValue = this.chiSquaredPValue(chiSquared, degreesOfFreedom);
 
         return {
             name: 'Block Frequency',
@@ -294,7 +299,7 @@ export class RandomnessValidator {
         const expectedRuns = (2 * n * pi * (1 - pi)) + 1;
         const variance = (2 * n * pi * (1 - pi)) * (2 * n * pi * (1 - pi) - 1) / (2 * n - 1);
         const z = (runs - expectedRuns) / Math.sqrt(variance);
-        const pValue = Math.erfc(Math.abs(z) / Math.sqrt(2));
+        const pValue = StatisticalUtils.erfc(Math.abs(z) / Math.sqrt(2));
 
         return {
             name: 'Runs',
@@ -325,7 +330,7 @@ export class RandomnessValidator {
 
         const expectedMax = Math.log2(data.length);
         const z = (maxRun - expectedMax) / Math.sqrt(expectedMax);
-        const pValue = Math.erfc(Math.abs(z) / Math.sqrt(2));
+        const pValue = StatisticalUtils.erfc(Math.abs(z) / Math.sqrt(2));
 
         return {
             name: 'Longest Run',
@@ -448,7 +453,7 @@ export class RandomnessValidator {
         }
 
         const z = maxCusum / Math.sqrt(data.length);
-        const pValue = Math.erfc(z / Math.sqrt(2));
+        const pValue = StatisticalUtils.erfc(z / Math.sqrt(2));
 
         return {
             name: 'Cumulative Sums',
@@ -669,7 +674,7 @@ export class RandomnessValidator {
             chiSquare += (diff * diff) / expected;
         }
 
-        const pValue = ss.chiSquaredGoodnessOfFit(chiSquare, 255);
+        const pValue = this.chiSquaredPValue(chiSquare, 255);
         return { statistic: chiSquare, pValue };
     }
 
@@ -833,6 +838,28 @@ export class RandomnessValidator {
         maxScore += 10;
 
         return (totalScore / maxScore) * 100;
+    }
+
+    private chiSquaredPValue(chiSquare: number, degreesOfFreedom: number): number {
+        // Simplified chi-squared p-value calculation using gamma function approximation
+        // For production, use a proper statistical library
+        if (chiSquare <= 0) return 1;
+        if (degreesOfFreedom <= 0) return 0;
+
+        // Use complementary error function approximation for chi-squared distribution
+        const x = chiSquare / 2;
+        const a = degreesOfFreedom / 2;
+
+        // Simple approximation - for production use proper incomplete gamma function
+        if (a === 1) {
+            return StatisticalUtils.erfc(Math.sqrt(x));
+        }
+
+        // For other degrees of freedom, use a basic approximation
+        const z = Math.pow(x / a, 1 / 3) - 1 + 2 / (9 * a);
+        const normalizedZ = z / Math.sqrt(2 / (9 * a));
+
+        return StatisticalUtils.erfc(Math.abs(normalizedZ) / Math.sqrt(2));
     }
 
     private generateRecommendation(results: RandomnessTestSuite): string {

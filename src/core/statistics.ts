@@ -460,6 +460,61 @@ export function detectAnomalies(trials: RNGTrial[], threshold: number = 3): {
 /**
  * Generate comprehensive baseline analysis report
  */
+/**
+ * Statistical Analyzer class for comprehensive trial analysis
+ * Provides object-oriented interface to statistical functions
+ */
+export class StatisticalAnalyzer {
+    /**
+     * Analyze a set of RNG trials and return comprehensive statistical results
+     */
+    async analyzeTrials(trials: RNGTrial[]): Promise<StatisticalResult> {
+        return calculateStatisticalResult(trials);
+    }
+
+    /**
+     * Run quality tests on trials
+     */
+    async runQualityTests(trials: RNGTrial[]): Promise<ReturnType<typeof runBaselineTest>> {
+        return runBaselineTest(trials);
+    }
+
+    /**
+     * Calculate basic statistics
+     */
+    calculateBasicStats(trials: RNGTrial[]): ReturnType<typeof calculateBasicStats> {
+        return calculateBasicStats(trials);
+    }
+
+    /**
+     * Calculate moving statistics with windowing
+     */
+    calculateMovingStats(trials: RNGTrial[], windowSize: number): ReturnType<typeof calculateMovingStats> {
+        return calculateMovingStats(trials, windowSize);
+    }
+
+    /**
+     * Detect anomalies in trial data
+     */
+    detectAnomalies(trials: RNGTrial[], threshold: number = 3): ReturnType<typeof detectAnomalies> {
+        return detectAnomalies(trials, threshold);
+    }
+
+    /**
+     * Calculate network variance using GCP methodology
+     */
+    calculateNetworkVariance(trials: RNGTrial[]): ReturnType<typeof calculateNetworkVariance> {
+        return calculateNetworkVariance(trials);
+    }
+}
+
+/**
+ * Create a new StatisticalAnalyzer instance
+ */
+export function createStatisticalAnalyzer(): StatisticalAnalyzer {
+    return new StatisticalAnalyzer();
+}
+
 export function runBaselineTest(trials: RNGTrial[]): {
     passed: boolean;
     issues: string[];

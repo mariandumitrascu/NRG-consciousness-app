@@ -463,8 +463,8 @@ export class RNGEngine {
     }
 
     /**
- * Clean up resources
- */
+     * Clean up resources
+     */
     destroy(): void {
         this.stopContinuous();
         this.listeners.length = 0;
@@ -473,6 +473,57 @@ export class RNGEngine {
         this.qualityMetrics.recentTrials.length = 0;
 
         console.log('RNG Engine destroyed');
+    }
+
+    /**
+     * Generate a single random bit (0 or 1)
+     */
+    generateBit(): number {
+        // Use crypto.getRandomValues for cryptographic randomness
+        const array = new Uint8Array(1);
+        crypto.getRandomValues(array);
+
+        // Extract least significant bit for unbiased randomness
+        return array[0] & 1;
+    }
+
+    /**
+     * Initialize the RNG engine
+     */
+    async initialize(): Promise<void> {
+        try {
+            console.log('Initializing RNG engine...');
+
+            // Verify crypto support
+            const cryptoSupport = verifyCryptoSupport();
+            if (!cryptoSupport.supported) {
+                throw new Error('Crypto API not supported in this environment');
+            }
+
+            // Initialize timers
+            this.sessionTimer = new SessionTimer();
+
+            if (this.precisionTimer) {
+                this.precisionTimer = new PrecisionTimer(
+                    1000 / this.config.targetRate,
+                    () => this.generateAndProcessTrial(),
+                    this.config.highPrecisionTiming
+                );
+            }
+
+            // Test RNG quality
+            if (this.config.qualityMonitoring) {
+                const qualityTest = await testRNGQuality(100);
+                if (!qualityTest.passed) {
+                    console.warn('RNG quality test failed:', qualityTest.issues);
+                }
+            }
+
+            console.log('RNG engine initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize RNG engine:', error);
+            throw new Error(`RNG initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 }
 

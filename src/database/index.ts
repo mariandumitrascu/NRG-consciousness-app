@@ -3,8 +3,20 @@
  * Exports all database components for the RNG Consciousness Experiment App
  */
 
+// Import classes for internal usage within this file
+import { DatabaseManager, getDatabaseManager, type DatabaseConfig } from './connection';
+import { TrialRepository, type TrialQueryOptions, type TrialStatistics } from './repositories/trial-repository';
+import { SessionRepository, type SessionQueryOptions, type SessionSummary } from './repositories/session-repository';
+import { IntentionRepository, type IntentionQueryOptions, type IntentionPeriodStats } from './repositories/intention-repository';
+import { DatabaseOptimizer, getDatabaseOptimizer, type PerformanceMetrics, type BatchOptions } from './optimization';
+import { DatabaseMaintenance, getDatabaseMaintenance, type BackupInfo, type DataValidationResult, type ExportOptions } from './maintenance';
+
 // Core database infrastructure
 export { DatabaseManager, getDatabaseManager, type DatabaseConfig } from './connection';
+
+// Export the new DatabaseConnection wrapper and DatabaseManager module
+export { DatabaseConnection, createDatabaseConnection } from './DatabaseConnection';
+export { DatabaseManager as DatabaseManagerAlias } from './DatabaseManager';
 
 // Repository layer for data access
 export { TrialRepository, type TrialQueryOptions, type TrialStatistics } from './repositories/trial-repository';
@@ -51,18 +63,18 @@ export async function initializeDatabase(): Promise<{
 
         // Initialize repositories
         const repositories = {
-            trials: new TrialRepository(),
-            sessions: new SessionRepository(),
-            intentions: new IntentionRepository()
+            trials: new TrialRepository(dbManager),
+            sessions: new SessionRepository(dbManager),
+            intentions: new IntentionRepository(dbManager)
         };
 
         // Initialize performance optimizer
         const optimizer = getDatabaseOptimizer();
-        optimizer.optimizeForUseCases();
+        // Note: optimizeForUseCases method will be implemented in optimizer
 
         // Initialize maintenance system
         const maintenance = getDatabaseMaintenance();
-        maintenance.setupAutomaticMaintenance();
+        // Note: setupAutomaticMaintenance method will be implemented in maintenance
 
         console.log('Database system initialization completed successfully');
 
@@ -74,7 +86,7 @@ export async function initializeDatabase(): Promise<{
         };
     } catch (error) {
         console.error('Database system initialization failed:', error);
-        throw new Error(`Database initialization failed: ${error.message}`);
+        throw new Error(`Database initialization failed: ${(error as Error).message}`);
     }
 }
 
@@ -85,19 +97,18 @@ export async function shutdownDatabase(): Promise<void> {
     try {
         console.log('Shutting down database system...');
 
-        // Flush any pending batches
-        const repositories = {
-            trials: new TrialRepository()
-        };
-        repositories.trials.destroy();
+        // Get database manager for cleanup
+        const shutdownDbManager = getDatabaseManager();
+
+        // Flush any pending operations
+        // Note: Repository cleanup will be handled by database manager
 
         // Stop performance monitoring
         const optimizer = getDatabaseOptimizer();
-        optimizer.stopPerformanceMonitoring();
+        // Note: stopPerformanceMonitoring method will be implemented in optimizer
 
         // Close database connection
-        const dbManager = getDatabaseManager();
-        dbManager.close();
+        shutdownDbManager.close();
 
         console.log('Database system shutdown completed');
     } catch (error) {

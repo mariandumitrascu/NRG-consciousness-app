@@ -10,7 +10,7 @@
  */
 
 import { DatabaseManager } from '../database';
-import { ExportMetadata, ValidationResult } from '../shared/types';
+import { ExportMetadata, ValidationResult, RNGTrial } from '../shared/types';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
@@ -58,7 +58,7 @@ export class DataRetentionManager {
             const exportResult = await this.exportTimeRange(
                 new Date(0), // Start from beginning
                 cutoffDate,
-                'archive'
+                'json' as const
             );
 
             if (!exportResult.success) {
@@ -501,7 +501,7 @@ export class DataRetentionManager {
             return { isBiased: false, description: 'Insufficient data for bias check' };
         }
 
-        const mean = recentTrials.reduce((sum, trial) => sum + trial.trialValue, 0) / recentTrials.length;
+        const mean = recentTrials.reduce((sum: number, trial: RNGTrial) => sum + trial.trialValue, 0) / recentTrials.length;
         const expectedMean = 100;
         const standardError = Math.sqrt(200 * 0.25) / Math.sqrt(recentTrials.length); // Standard error for binomial
         const zScore = Math.abs(mean - expectedMean) / standardError;
@@ -518,7 +518,7 @@ export class DataRetentionManager {
 
     private async getDatabaseSize(): Promise<number> {
         try {
-            const stats = await fs.stat(this.database.getDatabasePath());
+            const stats = await fs.stat(this.database.getDatabase().name);
             return stats.size;
         } catch (error) {
             return 0;

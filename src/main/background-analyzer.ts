@@ -217,9 +217,9 @@ export class BackgroundAnalyzer extends EventEmitter {
             const correlations: CorrelationResult[] = [];
 
             // Analyze intention effectiveness
-            const highIntentionTrials = trials.filter(t => t.intention === 'high');
-            const lowIntentionTrials = trials.filter(t => t.intention === 'low');
-            const baselineTrials = trials.filter(t => t.intention === null);
+            const highIntentionTrials = trials.filter((t: RNGTrial) => t.intention === 'high');
+            const lowIntentionTrials = trials.filter((t: RNGTrial) => t.intention === 'low');
+            const baselineTrials = trials.filter((t: RNGTrial) => t.intention === null);
 
             if (highIntentionTrials.length > 0 && baselineTrials.length > 0) {
                 const highStats = await this.statisticalAnalyzer.analyzeTrials(highIntentionTrials);
@@ -401,7 +401,7 @@ export class BackgroundAnalyzer extends EventEmitter {
     private async analyzeTimeOfDayCorrelation(trials: RNGTrial[]): Promise<CorrelationResult | null> {
         if (trials.length < 24) return null;
 
-        const hourlyData = new Array(24).fill(0).map(() => ({ trials: [], sum: 0, count: 0 }));
+        const hourlyData = new Array(24).fill(0).map(() => ({ trials: [] as RNGTrial[], sum: 0, count: 0 }));
 
         // Group trials by hour
         trials.forEach(trial => {

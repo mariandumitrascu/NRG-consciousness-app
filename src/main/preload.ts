@@ -7,7 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Will be implemented in Phase 1
 });
 
-// Prevent the renderer process from accessing Node.js APIs
-window.addEventListener('DOMContentLoaded', () => {
-    // Additional security measures will be added here
-});
+// Context bridge setup complete
+// Note: window object is not available in the preload script context
+// DOM-related code should be moved to the renderer process
