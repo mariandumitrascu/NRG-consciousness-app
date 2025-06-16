@@ -217,9 +217,9 @@ export class BackgroundAnalyzer extends EventEmitter {
             const correlations: CorrelationResult[] = [];
 
             // Analyze intention effectiveness
-            const highIntentionTrials = trials.filter(t => t.intention === 'high');
-            const lowIntentionTrials = trials.filter(t => t.intention === 'low');
-            const baselineTrials = trials.filter(t => t.intention === null);
+            const highIntentionTrials = trials.filter((t: RNGTrial) => t.intention === 'high');
+            const lowIntentionTrials = trials.filter((t: RNGTrial) => t.intention === 'low');
+            const baselineTrials = trials.filter((t: RNGTrial) => t.intention === null);
 
             if (highIntentionTrials.length > 0 && baselineTrials.length > 0) {
                 const highStats = await this.statisticalAnalyzer.analyzeTrials(highIntentionTrials);

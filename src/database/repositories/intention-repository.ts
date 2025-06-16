@@ -32,8 +32,8 @@ export interface IntentionPeriodStats {
 export class IntentionRepository {
     private db: Database.Database;
     private trialRepository: TrialRepository;
-    private insertStmt: Database.Statement;
-    private updateStmt: Database.Statement;
+    private insertStmt!: Database.Statement;
+    private updateStmt!: Database.Statement;
 
     constructor(dbManager?: DatabaseManager) {
         const manager = dbManager || getDatabaseManager();

@@ -180,12 +180,15 @@ export class QualityController extends EventEmitter {
 
         const report: QualityReport = {
             id: reportId,
+            sessionId: data.length > 0 ? data[0].sessionId : 'unknown',
             timestamp,
             overallScore,
+            issues: this.convertAnomaliesToQualityIssues(anomalies),
             status,
             metrics: this.convertMetricArrayToObject(metrics),
             anomalies: this.convertAnomaliesToQualityIssues(anomalies),
             recommendations,
+            passesThreshold: overallScore >= 75,
             dataIntegrity: integrityReport.overallIntegrity,
             statisticalValidity: validityAssessment.overallValidity
         };

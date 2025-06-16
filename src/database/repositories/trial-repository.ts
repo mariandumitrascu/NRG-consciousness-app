@@ -30,8 +30,8 @@ export interface TrialStatistics {
 
 export class TrialRepository {
     private db: Database.Database;
-    private insertStmt: Database.Statement;
-    private insertBatchStmt: Database.Statement;
+    private insertStmt!: Database.Statement;
+    private insertBatchStmt!: Database.Statement;
     private batchBuffer: RNGTrial[] = [];
     private batchTimeout: NodeJS.Timeout | null = null;
     private readonly batchSize = 100;

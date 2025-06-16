@@ -243,7 +243,7 @@ export class ContinuousDataCollector extends EventEmitter {
             // Create trial record
             const rngTrial: RNGTrial = {
                 timestamp: new Date(),
-                trialValue: trial.value,
+                trialValue: trial.value || 0,
                 sessionId: 'continuous', // Special session ID for continuous mode
                 experimentMode: 'continuous',
                 intention: this.currentIntentionPeriod?.intention || null,
@@ -394,7 +394,7 @@ export class ContinuousDataCollector extends EventEmitter {
 
             // Calculate average deviation
             let totalDeviation = 0;
-            todayTrials.forEach(trial => {
+            todayTrials.forEach((trial: RNGTrial) => {
                 totalDeviation += Math.abs(trial.trialValue - 100);
             });
             const averageDeviation = todayTrials.length > 0 ? totalDeviation / todayTrials.length : 0;
