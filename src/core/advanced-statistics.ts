@@ -50,29 +50,27 @@ export class AdvancedStatistics {
         const normalizedVariance = variance / (expectedStd * expectedStd);
 
         // Calculate temporal correlation
-        const temporalCorrelation = this.calculateTemporalCorrelation(deviations);
+        const temporalCorrelation = this.calculateTemporalCorrelation(deviations.map(d => d.deviation));
 
         // Calculate spatial correlation (if location data available)
         const spatialCorrelation = this.calculateSpatialCorrelation(trials, parameters);
 
         // Calculate coherence metrics
-        const coherence = this.calculateCoherence(deviations);
+        const coherence = this.calculateCoherence(deviations.map(d => d.deviation));
 
         // Statistical significance
         const chiSquare = (trials.length - 1) * normalizedVariance;
         const pValue = StatisticalUtils.chiSquareProbability(chiSquare, trials.length - 1);
 
         return {
-            variance,
-            normalizedVariance,
-            temporalCorrelation,
-            spatialCorrelation,
-            coherence,
-            chiSquare,
-            pValue,
-            significance: pValue < 0.05 ? 'significant' : 'not_significant',
-            sampleSize: trials.length,
-            timestamp: new Date()
+            netvar: normalizedVariance,
+            degreesOfFreedom: trials.length - 1,
+            chisquare: chiSquare,
+            probability: pValue,
+            significance: pValue < 0.05 ? 'significant' : 'none',
+            confidenceInterval: [normalizedVariance - 1.96, normalizedVariance + 1.96],
+            expectedNetvar: 1.0,
+            standardError: Math.sqrt(2 / trials.length)
         };
     }
 
@@ -113,16 +111,12 @@ export class AdvancedStatistics {
         const andersonDarling = this.performADTest(normalizedTrials);
 
         return {
-            deviceMean,
             deviceVariance,
-            deviceSkewness,
-            deviceKurtosis,
-            drift,
-            autocorrelation,
-            kolmogorovSmirnov,
-            andersonDarling,
-            sampleSize: trials.length,
-            timestamp: new Date()
+            individualZScores: normalizedTrials, // Use normalized trials as Z-scores
+            probability: andersonDarling.pValue, // Use AD test p-value
+            significance: andersonDarling.pValue < 0.05 ? 'significant' : 'none',
+            degreesOfFreedom: trials.length - 1,
+            deviceMean
         };
     }
 
@@ -163,11 +157,13 @@ export class AdvancedStatistics {
             const zScore = runningSum / expectedCumulativeStd;
 
             points.push({
-                index: n,
+                trialIndex: n,
                 timestamp: trial.timestamp,
                 cumulativeDeviation: runningSum,
+                runningMean: currentMean,
                 zScore,
-                pValue: StatisticalUtils.normalProbabilityOneTailed(Math.abs(zScore))
+                runningVariance: currentVariance,
+                index: n
             });
         });
 
@@ -185,15 +181,11 @@ export class AdvancedStatistics {
 
         return {
             points,
-            excursions,
             finalDeviation,
-            finalZScore,
-            finalPValue,
-            maxPositiveExcursion,
-            maxNegativeExcursion,
-            significance: finalPValue < 0.05 ? 'significant' : 'not_significant',
-            sampleSize: trials.length,
-            timestamp: new Date()
+            maxDeviation: maxPositiveExcursion,
+            minDeviation: maxNegativeExcursion,
+            crossings: 0, // TODO: Calculate actual crossings
+            excursions
         };
     }
 
@@ -228,19 +220,17 @@ export class AdvancedStatistics {
         const confidenceInterval: [number, number] = [observedMean - margin, observedMean + margin];
 
         // Determine significance
-        const significance = pValueTwoTailed < 0.05 ? 'significant' : 'not_significant';
+        const significance = pValueTwoTailed < 0.05 ? 'significant' : 'none';
 
         return {
-            observedMean,
-            expectedMean,
-            standardError,
             zScore,
-            pValueTwoTailed,
+            pValue: pValueTwoTailed,
             pValueOneTailed,
             confidenceInterval,
-            significance,
+            standardError,
+            effectSize: Math.abs(zScore) * standardError, // Simple effect size calculation
             sampleSize: trials.length,
-            timestamp: new Date()
+            significance
         };
     }
 
@@ -484,5 +474,144 @@ export class AdvancedStatistics {
         }
 
         return x;
+    }
+
+    /**
+     * Calculate temporal correlation in time-ordered data
+     */
+    static calculateTemporalCorrelation(deviations: number[]): number {
+        if (deviations.length < 2) return 0;
+
+        // Calculate autocorrelation at lag 1
+        const mean = StatisticalUtils.mean(deviations);
+        let numerator = 0;
+        let denominator = 0;
+
+        for (let i = 0; i < deviations.length - 1; i++) {
+            numerator += (deviations[i] - mean) * (deviations[i + 1] - mean);
+        }
+
+        for (let i = 0; i < deviations.length; i++) {
+            denominator += (deviations[i] - mean) * (deviations[i] - mean);
+        }
+
+        return denominator === 0 ? 0 : numerator / denominator;
+    }
+
+    /**
+     * Calculate spatial correlation between trials
+     */
+    static calculateSpatialCorrelation(trials: RNGTrial[], parameters: AnalysisParameters): number {
+        const values = trials.map(t => t.trialValue);
+        if (values.length < 2) return 0;
+
+        // Simple spatial correlation using adjacent trials
+        return this.calculateTemporalCorrelation(values);
+    }
+
+    /**
+     * Calculate coherence measure
+     */
+    static calculateCoherence(deviations: number[]): number {
+        if (deviations.length === 0) return 0;
+
+        const mean = StatisticalUtils.mean(deviations);
+        const variance = StatisticalUtils.variance(deviations);
+
+        // Coherence as inverse of normalized variance
+        return variance === 0 ? 1 : 1 / (1 + variance / (mean * mean + 1));
+    }
+
+    /**
+     * Calculate drift in the data
+     */
+    static calculateDrift(values: number[]): number {
+        if (values.length < 2) return 0;
+
+        // Simple linear trend calculation
+        const n = values.length;
+        const x = Array.from({ length: n }, (_, i) => i);
+        const meanX = StatisticalUtils.mean(x);
+        const meanY = StatisticalUtils.mean(values);
+
+        let numerator = 0;
+        let denominator = 0;
+
+        for (let i = 0; i < n; i++) {
+            numerator += (x[i] - meanX) * (values[i] - meanY);
+            denominator += (x[i] - meanX) * (x[i] - meanX);
+        }
+
+        return denominator === 0 ? 0 : numerator / denominator;
+    }
+
+    /**
+     * Calculate autocorrelation at specified lag
+     */
+    static calculateAutocorrelation(values: number[], lag: number = 1): number {
+        if (values.length <= lag) return 0;
+
+        const mean = StatisticalUtils.mean(values);
+        let numerator = 0;
+        let denominator = 0;
+
+        for (let i = lag; i < values.length; i++) {
+            numerator += (values[i] - mean) * (values[i - lag] - mean);
+        }
+
+        for (let i = 0; i < values.length; i++) {
+            denominator += (values[i] - mean) * (values[i] - mean);
+        }
+
+        return denominator === 0 ? 0 : numerator / denominator;
+    }
+
+    /**
+     * Perform Kolmogorov-Smirnov test
+     */
+    static performKSTest(values: number[]): { statistic: number; pValue: number } {
+        if (values.length === 0) return { statistic: 0, pValue: 1 };
+
+        // Simple KS test implementation
+        const sorted = [...values].sort((a, b) => a - b);
+        const n = sorted.length;
+        let maxD = 0;
+
+        for (let i = 0; i < n; i++) {
+            const empirical = (i + 1) / n;
+            const theoretical = StatisticalUtils.normalCdf(sorted[i]);
+            maxD = Math.max(maxD, Math.abs(empirical - theoretical));
+        }
+
+        // Approximate p-value calculation
+        const sqrtN = Math.sqrt(n);
+        const pValue = 2 * Math.exp(-2 * maxD * maxD * n);
+
+        return { statistic: maxD, pValue: Math.min(pValue, 1) };
+    }
+
+    /**
+     * Perform Anderson-Darling test
+     */
+    static performADTest(values: number[]): { statistic: number; pValue: number } {
+        if (values.length === 0) return { statistic: 0, pValue: 1 };
+
+        // Simplified Anderson-Darling test
+        const sorted = [...values].sort((a, b) => a - b);
+        const n = sorted.length;
+        let ad = 0;
+
+        for (let i = 0; i < n; i++) {
+            const p1 = StatisticalUtils.normalCdf(sorted[i]);
+            const p2 = StatisticalUtils.normalCdf(sorted[n - 1 - i]);
+            ad += (2 * i + 1) * (Math.log(p1) + Math.log(1 - p2));
+        }
+
+        ad = -n - ad / n;
+
+        // Approximate p-value
+        const pValue = Math.exp(-0.5 * ad);
+
+        return { statistic: ad, pValue: Math.min(pValue, 1) };
     }
 }

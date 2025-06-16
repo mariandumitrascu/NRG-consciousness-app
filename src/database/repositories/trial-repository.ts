@@ -6,7 +6,7 @@
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import { RNGTrial, ExperimentMode, IntentionType } from '../../shared/types';
-import { getDatabaseManager } from '../connection';
+import { getDatabaseManager, DatabaseManager } from '../connection';
 
 export interface TrialQueryOptions {
     sessionId?: string;
@@ -37,9 +37,9 @@ export class TrialRepository {
     private readonly batchSize = 100;
     private readonly batchTimeoutMs = 30000; // 30 seconds
 
-    constructor() {
-        const dbManager = getDatabaseManager();
-        this.db = dbManager.getConnection();
+    constructor(dbManager?: DatabaseManager) {
+        const manager = dbManager || getDatabaseManager();
+        this.db = manager.getConnection();
         this.prepareStatements();
     }
 
@@ -52,7 +52,7 @@ export class TrialRepository {
             this.insertStmt.run(params);
         } catch (error) {
             console.error('Failed to insert trial:', error);
-            throw new Error(`Trial insertion failed: ${error.message}`);
+            throw new Error(`Trial insertion failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -73,7 +73,7 @@ export class TrialRepository {
             });
         } catch (error) {
             console.error('Failed to insert trials batch:', error);
-            throw new Error(`Batch insertion failed: ${error.message}`);
+            throw new Error(`Batch insertion failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -135,7 +135,7 @@ export class TrialRepository {
             return rows.map(row => this.dbRowToTrial(row));
         } catch (error) {
             console.error('Failed to get trials by session:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -183,7 +183,7 @@ export class TrialRepository {
             return rows.map(row => this.dbRowToTrial(row));
         } catch (error) {
             console.error('Failed to get trials by time range:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -354,6 +354,71 @@ export class TrialRepository {
         }
         if (this.batchBuffer.length > 0) {
             this.flushBatch();
+        }
+    }
+
+    /**
+     * Delete trials older than specified number of days
+     */
+    async deleteOlderThan(date: Date): Promise<number> {
+        try {
+            const stmt = this.db.prepare(`
+                DELETE FROM trials
+                WHERE timestamp < ?
+            `);
+
+            const result = stmt.run(date.getTime());
+            console.log(`Deleted ${result.changes} trials older than ${date.toISOString()}`);
+            return result.changes || 0;
+        } catch (error) {
+            console.error('Failed to delete old trials:', error);
+            throw new Error(`Delete operation failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Find trials that fail validation
+     */
+    async findInvalidTrials(): Promise<RNGTrial[]> {
+        try {
+            // Find trials with invalid values (outside expected range for 200-bit trials)
+            const stmt = this.db.prepare(`
+                SELECT * FROM trials
+                WHERE trial_value < 0 OR trial_value > 200
+                   OR session_id IS NULL OR session_id = ''
+                   OR timestamp IS NULL
+                ORDER BY timestamp DESC
+            `);
+
+            const rows = stmt.all();
+            return rows.map(row => this.dbRowToTrial(row));
+        } catch (error) {
+            console.error('Failed to find invalid trials:', error);
+            throw new Error(`Invalid trials query failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Find duplicate trials (same timestamp and session)
+     */
+    async findDuplicates(): Promise<RNGTrial[]> {
+        try {
+            const stmt = this.db.prepare(`
+                SELECT t1.* FROM trials t1
+                INNER JOIN (
+                    SELECT timestamp, session_id, COUNT(*) as cnt
+                    FROM trials
+                    GROUP BY timestamp, session_id
+                    HAVING cnt > 1
+                ) t2 ON t1.timestamp = t2.timestamp AND t1.session_id = t2.session_id
+                ORDER BY t1.timestamp DESC
+            `);
+
+            const rows = stmt.all();
+            return rows.map(row => this.dbRowToTrial(row));
+        } catch (error) {
+            console.error('Failed to find duplicate trials:', error);
+            throw new Error(`Duplicate search failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

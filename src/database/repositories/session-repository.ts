@@ -6,7 +6,7 @@
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import { ExperimentSession, SessionStatus, IntentionType, StatisticalResult } from '../../shared/types';
-import { getDatabaseManager } from '../connection';
+import { getDatabaseManager, DatabaseManager } from '../connection';
 import { TrialRepository } from './trial-repository';
 
 export interface SessionQueryOptions {
@@ -39,10 +39,10 @@ export class SessionRepository {
     private insertStmt: Database.Statement;
     private updateStmt: Database.Statement;
 
-    constructor() {
-        const dbManager = getDatabaseManager();
-        this.db = dbManager.getConnection();
-        this.trialRepository = new TrialRepository();
+    constructor(dbManager?: DatabaseManager) {
+        const manager = dbManager || getDatabaseManager();
+        this.db = manager.getConnection();
+        this.trialRepository = new TrialRepository(manager);
         this.prepareStatements();
     }
 

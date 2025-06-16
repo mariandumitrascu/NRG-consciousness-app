@@ -26,6 +26,11 @@ export class DatabaseManager {
     private config: DatabaseConfig;
     private isInitialized = false;
 
+    // Repository instances
+    private _trials: any = null;
+    private _sessions: any = null;
+    private _intentionPeriods: any = null;
+
     constructor(config?: Partial<DatabaseConfig>) {
         // Default configuration
         this.config = {
@@ -64,9 +69,9 @@ export class DatabaseManager {
 
             this.isInitialized = true;
             console.log(`Database initialized successfully at: ${this.config.dbPath}`);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to initialize database:', error);
-            throw new Error(`Database initialization failed: ${error.message}`);
+            throw new Error(`Database initialization failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -113,25 +118,25 @@ export class DatabaseManager {
 
             // Wait for backup to complete
             await new Promise<void>((resolve, reject) => {
-                backup.on('progress', ({ totalPages, remainingPages }) => {
+                (backup as any).on('progress', ({ totalPages, remainingPages }: any) => {
                     console.log(`Backing up database: ${totalPages - remainingPages}/${totalPages} pages`);
                 });
 
-                backup.on('done', () => {
+                (backup as any).on('done', () => {
                     console.log(`Database backup completed: ${backupPath}`);
                     resolve();
                 });
 
-                backup.on('error', (error) => {
+                (backup as any).on('error', (error: any) => {
                     console.error('Backup failed:', error);
                     reject(error);
                 });
             });
 
             return backupPath;
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to create backup:', error);
-            throw new Error(`Backup failed: ${error.message}`);
+            throw new Error(`Backup failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -154,9 +159,9 @@ export class DatabaseManager {
             await this.initialize();
 
             console.log(`Database restored from backup: ${backupPath}`);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to restore from backup:', error);
-            throw new Error(`Restore failed: ${error.message}`);
+            throw new Error(`Restore failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -182,9 +187,9 @@ export class DatabaseManager {
 
             // Future migration logic would go here
             console.log('Migration completed successfully');
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Migration failed:', error);
-            throw new Error(`Migration failed: ${error.message}`);
+            throw new Error(`Migration failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -243,7 +248,104 @@ export class DatabaseManager {
         }
 
         const transaction = this.db.transaction(fn);
-        return transaction();
+        return transaction(this.db);
+    }
+
+    /**
+     * Get the database instance (alias for getConnection for compatibility)
+     */
+    getDatabase(): Database.Database {
+        return this.getConnection();
+    }
+
+    /**
+     * Run VACUUM command to optimize database
+     */
+    async vacuum(): Promise<void> {
+        if (!this.db) {
+            throw new Error('Database not initialized');
+        }
+
+        try {
+            console.log('Running VACUUM to optimize database...');
+            this.db.exec('VACUUM');
+            console.log('VACUUM completed successfully');
+        } catch (error: unknown) {
+            console.error('VACUUM failed:', error);
+            throw new Error(`VACUUM failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Run ANALYZE command to update statistics
+     */
+    async analyze(): Promise<void> {
+        if (!this.db) {
+            throw new Error('Database not initialized');
+        }
+
+        try {
+            console.log('Running ANALYZE to update statistics...');
+            this.db.exec('ANALYZE');
+            console.log('ANALYZE completed successfully');
+        } catch (error: unknown) {
+            console.error('ANALYZE failed:', error);
+            throw new Error(`ANALYZE failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Reindex all database tables
+     */
+    async reindex(): Promise<void> {
+        if (!this.db) {
+            throw new Error('Database not initialized');
+        }
+
+        try {
+            console.log('Running REINDEX to rebuild indexes...');
+            this.db.exec('REINDEX');
+            console.log('REINDEX completed successfully');
+        } catch (error: unknown) {
+            console.error('REINDEX failed:', error);
+            throw new Error(`REINDEX failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Get trials repository
+     */
+    get trials(): any {
+        if (!this._trials) {
+            // Import TrialRepository here to avoid circular dependencies
+            const { TrialRepository } = require('./repositories/trial-repository');
+            this._trials = new TrialRepository();
+        }
+        return this._trials;
+    }
+
+    /**
+     * Get sessions repository
+     */
+    get sessions(): any {
+        if (!this._sessions) {
+            // Import SessionRepository here to avoid circular dependencies
+            const { SessionRepository } = require('./repositories/session-repository');
+            this._sessions = new SessionRepository();
+        }
+        return this._sessions;
+    }
+
+    /**
+     * Get intention periods repository
+     */
+    get intentionPeriods(): any {
+        if (!this._intentionPeriods) {
+            // Import IntentionRepository here to avoid circular dependencies
+            const { IntentionRepository } = require('./repositories/intention-repository');
+            this._intentionPeriods = new IntentionRepository();
+        }
+        return this._intentionPeriods;
     }
 
     // Private methods

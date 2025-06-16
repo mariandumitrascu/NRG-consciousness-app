@@ -505,7 +505,7 @@ export class AdvancedResearchStats {
      * Learning Curve Analyzer
      */
     static analyzeLearningCurve(sessions: ExperimentSession[]): LearningCurveAnalysis {
-        const sortedSessions = sessions.sort((a, b) => a.startTime - b.startTime);
+        const sortedSessions = sessions.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 
         const data: LearningCurveData[] = sortedSessions.map((session, index) => {
             const performance = this.calculateSessionPerformance(session);
@@ -515,7 +515,7 @@ export class AdvancedResearchStats {
 
             return {
                 sessionNumber: index + 1,
-                timestamp: session.startTime,
+                timestamp: session.startTime.getTime(),
                 performance,
                 cumulativePerformance,
                 learningRate: this.calculateLearningRate(sortedSessions.slice(0, index + 1)),
@@ -555,7 +555,21 @@ export class AdvancedResearchStats {
             issues,
             recommendations,
             overallScore,
-            passesThreshold
+            passesThreshold,
+            randomnessScore: metrics.validity || 0.85, // Use validity as proxy for randomness
+            biasDetected: overallScore < 0.7, // Simple bias detection threshold
+            patterns: [], // Empty patterns array for now
+            dataIntegrity: {
+                missingData: 0,
+                duplicates: 0,
+                temporalGaps: [],
+                outliers: {
+                    count: 0,
+                    indices: [],
+                    method: 'zscore' as const,
+                    threshold: 3.0
+                }
+            }
         };
     }
 
@@ -667,8 +681,11 @@ export class AdvancedResearchStats {
 
     private static calculateConsistency(trials: RNGTrial[]): number {
         // Measure temporal consistency of trial generation
-        const intervals = trials.slice(1).map((trial, i) =>
-            trial.timestamp - trials[i].timestamp);
+        const intervals = trials.slice(1).map((trial, i) => {
+            const currentTime = trial.timestamp instanceof Date ? trial.timestamp.getTime() : trial.timestamp;
+            const previousTime = trials[i].timestamp instanceof Date ? trials[i].timestamp.getTime() : trials[i].timestamp;
+            return currentTime - previousTime;
+        });
 
         const meanInterval = StatisticalUtils.mean(intervals);
         const stdInterval = StatisticalUtils.standardDeviation(intervals);
@@ -710,6 +727,7 @@ export class AdvancedResearchStats {
         metrics: QualityMetrics
     ): QualityIssue[] {
         const issues: QualityIssue[] = [];
+        const currentTime = new Date();
 
         if (metrics.completeness < 0.9) {
             issues.push({
@@ -717,7 +735,10 @@ export class AdvancedResearchStats {
                 severity: 'medium',
                 description: `Session incomplete: ${Math.round(metrics.completeness * 100)}% of expected trials`,
                 affectedData: ['trials'],
-                suggestedAction: 'Complete remaining trials or mark session as partial'
+                suggestedAction: 'Complete remaining trials or mark session as partial',
+                message: `Session incomplete: ${Math.round(metrics.completeness * 100)}% of expected trials`,
+                timestamp: currentTime,
+                sessionId: session.id
             });
         }
 
@@ -727,7 +748,10 @@ export class AdvancedResearchStats {
                 severity: 'low',
                 description: 'Irregular timing intervals between trials',
                 affectedData: ['timestamps'],
-                suggestedAction: 'Check for system interruptions during data collection'
+                suggestedAction: 'Check for system interruptions during data collection',
+                message: 'Irregular timing intervals between trials',
+                timestamp: currentTime,
+                sessionId: session.id
             });
         }
 

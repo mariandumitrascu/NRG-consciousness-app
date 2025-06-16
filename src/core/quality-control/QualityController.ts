@@ -1,29 +1,8 @@
 import { EventEmitter } from 'events';
 import * as ss from 'simple-statistics';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { RNGTrial } from '../../shared/types';
-
-export interface QualityMetric {
-    name: string;
-    value: number;
-    threshold: number;
-    status: 'excellent' | 'good' | 'warning' | 'critical';
-    description: string;
-    timestamp: Date;
-}
-
-export interface QualityReport {
-    id: string;
-    timestamp: Date;
-    sessionId?: string;
-    overallScore: number;
-    status: 'pass' | 'warning' | 'fail';
-    metrics: QualityMetric[];
-    anomalies: AnomalyReport[];
-    recommendations: string[];
-    dataIntegrity: number;
-    statisticalValidity: number;
-}
+import { RNGTrial, ExperimentSession } from '../../shared/types';
+import { QualityAssessment, QualityMetrics, QualityReport, QualityIssue, QualityThresholds } from '../../shared/analysis-types';
 
 export interface AnomalyReport {
     id: string;
@@ -61,46 +40,53 @@ export interface ValidityAssessment {
     recommendations: string[];
 }
 
-export interface QualityIssue {
-    type: 'data_quality' | 'system_performance' | 'statistical_anomaly' | 'hardware_issue';
-    severity: 'info' | 'warning' | 'error' | 'critical';
-    message: string;
-    data?: any;
+export interface QualityMetric {
+    name: string;
+    value: number;
+    threshold: number;
+    status: 'excellent' | 'good' | 'warning' | 'critical';
+    description: string;
     timestamp: Date;
-    sessionId?: string;
 }
+
+// QualityReport and QualityIssue are imported from analysis-types
 
 export class QualityController extends EventEmitter {
     private database: DatabaseManager;
-    private qualityThresholds: Map<string, number>;
+    private qualityThresholds: QualityThresholds;
     private monitoringEnabled: boolean = true;
     private currentQualityScore: number = 100;
     private alertCallbacks: Map<string, Function[]> = new Map();
 
-    constructor() {
+    constructor(database: DatabaseManager) {
         super();
-        this.database = new DatabaseManager();
-        this.initializeQualityThresholds();
-        this.initializeQualityTables();
-    }
+        this.database = database;
 
-    private initializeQualityThresholds(): void {
-        this.qualityThresholds = new Map([
-            ['bias_threshold', 0.05],
-            ['variance_threshold', 0.01],
-            ['autocorrelation_threshold', 0.1],
-            ['missing_data_threshold', 0.01],
-            ['timing_deviation_threshold', 0.1],
-            ['outlier_threshold', 3.0],
-            ['pattern_detection_threshold', 0.15],
-            ['entropy_threshold', 0.95],
-            ['compression_threshold', 0.05],
-            ['drift_threshold', 0.001]
-        ]);
+        // Initialize quality thresholds with default values and methods
+        this.qualityThresholds = {
+            dataIntegrity: 0.95,
+            statisticalValidity: 0.90,
+            biasThreshold: 0.05,
+            autocorrelationThreshold: 0.1,
+            entropyThreshold: 0.95,
+            anomalyThreshold: 0.05,
+
+            set: (key: string, value: number) => {
+                (this.qualityThresholds as any)[key] = value;
+            },
+
+            get: (key: string) => {
+                return (this.qualityThresholds as any)[key] || 0;
+            }
+        };
+
+        this.initializeQualityTables().catch(err => {
+            console.error('Failed to initialize quality tables:', err);
+        });
     }
 
     private async initializeQualityTables(): Promise<void> {
-        const db = this.database.getDatabase();
+        const db = this.database.getConnection();
 
         // Quality reports table
         db.exec(`
@@ -188,7 +174,8 @@ export class QualityController extends EventEmitter {
 
         // Calculate overall scores
         const overallScore = this.calculateOverallQualityScore(metrics, anomalies);
-        const status = this.determineQualityStatus(overallScore, anomalies);
+        const qualityStatus = this.determineQualityStatus(overallScore, anomalies);
+        const status = qualityStatus === 'pass' ? 'completed' : qualityStatus === 'warning' ? 'pending' : 'failed';
         const recommendations = this.generateQualityRecommendations(metrics, anomalies, integrityReport);
 
         const report: QualityReport = {
@@ -196,8 +183,8 @@ export class QualityController extends EventEmitter {
             timestamp,
             overallScore,
             status,
-            metrics,
-            anomalies,
+            metrics: this.convertMetricArrayToObject(metrics),
+            anomalies: this.convertAnomaliesToQualityIssues(anomalies),
             recommendations,
             dataIntegrity: integrityReport.overallIntegrity,
             statisticalValidity: validityAssessment.overallValidity
@@ -218,8 +205,12 @@ export class QualityController extends EventEmitter {
                 type: 'data_quality',
                 severity: 'critical',
                 message: 'Critical quality issues detected',
+                description: 'Critical quality issues detected in data analysis',
+                affectedData: ['quality_metrics', 'anomalies'],
+                suggestedAction: 'Review data quality and consider rejecting problematic sessions',
                 data: { reportId, overallScore },
-                timestamp
+                timestamp,
+                sessionId: report.sessionId
             });
         }
 
@@ -233,7 +224,7 @@ export class QualityController extends EventEmitter {
             return anomalies;
         }
 
-        const bits = data.map(trial => trial.bit);
+        const bits = data.map(trial => trial.bit).filter((bit): bit is number => bit !== undefined);
 
         // Detect bias anomalies
         const biasAnomalies = this.detectBiasAnomalies(bits);
@@ -295,7 +286,7 @@ export class QualityController extends EventEmitter {
             };
         }
 
-        const bits = data.map(trial => trial.bit);
+        const bits = data.map(trial => trial.bit).filter((bit): bit is number => bit !== undefined);
         const assumptionViolations: string[] = [];
 
         // Check sample size adequacy
@@ -307,18 +298,23 @@ export class QualityController extends EventEmitter {
         }
 
         // Check normality assumption (for continuous approximation)
-        const mean = ss.mean(bits);
-        const variance = ss.variance(bits);
-        const expectedVariance = mean * (1 - mean);
+        // Only proceed if we have valid bits
+        if (bits.length > 0) {
+            const mean = ss.mean(bits);
+            const variance = ss.variance(bits);
+            const expectedVariance = mean * (1 - mean);
 
-        if (Math.abs(variance - expectedVariance) > 0.01) {
-            assumptionViolations.push('Variance deviates from binomial expectation');
-        }
+            if (Math.abs(variance - expectedVariance) > 0.01) {
+                assumptionViolations.push('Variance deviates from binomial expectation');
+            }
 
-        // Check independence assumption
-        const autocorrelation = this.calculateLagOneAutocorrelation(bits);
-        if (Math.abs(autocorrelation) > 0.1) {
-            assumptionViolations.push('Significant autocorrelation detected');
+            // Check independence assumption
+            const autocorrelation = this.calculateLagOneAutocorrelation(bits);
+            if (Math.abs(autocorrelation) > 0.1) {
+                assumptionViolations.push('Significant autocorrelation detected');
+            }
+        } else {
+            assumptionViolations.push('No valid bit data available for analysis');
         }
 
         // Calculate statistical power for detecting small effects
@@ -327,6 +323,7 @@ export class QualityController extends EventEmitter {
         const power = this.calculateStatisticalPower(data.length, effectSize, alpha);
 
         // Assess effect size reliability
+        const variance = bits.length > 0 ? ss.variance(bits) : 0.25; // Default to expected variance if no bits
         const standardError = Math.sqrt(variance / data.length);
         const effectSizeReliability = Math.min(100, (1 / standardError) * 10);
 
@@ -365,7 +362,7 @@ export class QualityController extends EventEmitter {
 
     async generateQualityAlert(issue: QualityIssue): Promise<void> {
         // Store alert in database
-        const db = this.database.getDatabase();
+        const db = this.database.getConnection();
         const stmt = db.prepare(`
       INSERT INTO quality_alerts
       (type, severity, message, data, timestamp, session_id)
@@ -396,14 +393,6 @@ export class QualityController extends EventEmitter {
     }
 
     // Public configuration methods
-    setQualityThreshold(metric: string, threshold: number): void {
-        this.qualityThresholds.set(metric, threshold);
-    }
-
-    getQualityThreshold(metric: string): number {
-        return this.qualityThresholds.get(metric) || 0;
-    }
-
     enableMonitoring(): void {
         this.monitoringEnabled = true;
     }
@@ -425,63 +414,102 @@ export class QualityController extends EventEmitter {
 
     // Private helper methods
     private async getRecentTrialData(): Promise<RNGTrial[]> {
-        const db = this.database.getDatabase();
-        const stmt = db.prepare(`
-      SELECT * FROM trials
-      WHERE timestamp > ?
-      ORDER BY timestamp DESC
-      LIMIT 10000
-    `);
+        const db = this.database.getConnection();
+
+        // Define the expected structure of database rows
+        interface TrialRow {
+            id: string;
+            session_id: string;
+            timestamp: number;
+            bit: number;
+            intention: string;
+            cumulative_deviation: number;
+            trial_value: number;
+            experiment_mode: string;
+            trial_number: number;
+        }
 
         const oneHourAgo = Date.now() - (60 * 60 * 1000);
-        const rows = stmt.all(oneHourAgo);
+        const query = `
+            SELECT id, session_id, timestamp, bit, intention, cumulative_deviation,
+                   trial_value, experiment_mode, trial_number
+            FROM trials
+            WHERE timestamp > ?
+            ORDER BY timestamp DESC
+            LIMIT 10000`;
+
+        const rows = db.prepare(query).all(oneHourAgo) as TrialRow[];
 
         return rows.map(row => ({
-            id: row.id,
-            sessionId: row.session_id,
             timestamp: new Date(row.timestamp),
+            trialValue: row.trial_value,
+            sessionId: row.session_id,
+            experimentMode: row.experiment_mode as any,
+            intention: row.intention as any,
+            trialNumber: row.trial_number,
             bit: row.bit,
-            intention: row.intention,
-            cumulativeDeviation: row.cumulative_deviation
+            value: row.trial_value,
+            id: row.id,
+            actualTrials: 1
         }));
     }
 
     private async getSessionTrialData(sessionId: string): Promise<RNGTrial[]> {
-        const db = this.database.getDatabase();
-        const stmt = db.prepare(`
-      SELECT * FROM trials
-      WHERE session_id = ?
-      ORDER BY timestamp ASC
-    `);
+        const db = this.database.getConnection();
 
-        const rows = stmt.all(sessionId);
+        // Define the expected structure of database rows
+        interface TrialRow {
+            id: string;
+            session_id: string;
+            timestamp: number;
+            bit: number;
+            intention: string;
+            cumulative_deviation: number;
+            trial_value: number;
+            experiment_mode: string;
+            trial_number: number;
+        }
+
+        const query = `
+            SELECT id, session_id, timestamp, bit, intention, cumulative_deviation,
+                   trial_value, experiment_mode, trial_number
+            FROM trials
+            WHERE session_id = ?
+            ORDER BY timestamp ASC`;
+
+        const rows = db.prepare(query).all(sessionId) as TrialRow[];
 
         return rows.map(row => ({
-            id: row.id,
-            sessionId: row.session_id,
             timestamp: new Date(row.timestamp),
+            trialValue: row.trial_value,
+            sessionId: row.session_id,
+            experimentMode: row.experiment_mode as any,
+            intention: row.intention as any,
+            trialNumber: row.trial_number,
             bit: row.bit,
-            intention: row.intention,
-            cumulativeDeviation: row.cumulative_deviation
+            value: row.trial_value,
+            id: row.id,
+            actualTrials: 1
         }));
     }
 
     private async calculateQualityMetrics(data: RNGTrial[]): Promise<QualityMetric[]> {
         const metrics: QualityMetric[] = [];
-        const bits = data.map(trial => trial.bit);
-        const timestamp = new Date();
 
-        // Bias metric
-        const mean = ss.mean(bits);
-        const biasDeviation = Math.abs(mean - 0.5);
-        metrics.push({
-            name: 'Bias',
-            value: biasDeviation,
-            threshold: this.qualityThresholds.get('bias_threshold')!,
-            status: this.getMetricStatus(biasDeviation, this.qualityThresholds.get('bias_threshold')!),
-            description: 'Deviation from expected mean of 0.5',
-            timestamp
-        });
+        // Extract bit-level data for randomness tests
+        const bits = data.map(trial => trial.bit).filter((bit): bit is number => bit !== undefined);
+
+        if (bits.length === 0) {
+            // No bit data available, use trial values instead
+            const trialValues = data.map(trial => trial.trialValue);
+            metrics.push(this.createMetric('bias_test', this.calculateBias(trialValues), 0.05, 'Bias deviation from expected 50%'));
+            metrics.push(this.createMetric('autocorrelation', this.calculateLagOneAutocorrelation(trialValues), 0.1, 'Lag-1 autocorrelation'));
+            metrics.push(this.createMetric('entropy', this.calculateEntropy(trialValues.map(v => v > 100 ? 1 : 0)), 0.95, 'Shannon entropy'));
+        } else {
+            metrics.push(this.createMetric('bias_test', this.calculateBias(bits), 0.05, 'Bias deviation from expected 50%'));
+            metrics.push(this.createMetric('autocorrelation', this.calculateLagOneAutocorrelation(bits), 0.1, 'Lag-1 autocorrelation'));
+            metrics.push(this.createMetric('entropy', this.calculateEntropy(bits), 0.95, 'Shannon entropy'));
+        }
 
         // Variance metric
         const variance = ss.variance(bits);
@@ -490,10 +518,10 @@ export class QualityController extends EventEmitter {
         metrics.push({
             name: 'Variance',
             value: varianceDeviation,
-            threshold: this.qualityThresholds.get('variance_threshold')!,
-            status: this.getMetricStatus(varianceDeviation, this.qualityThresholds.get('variance_threshold')!),
+            threshold: this.qualityThresholds.anomalyThreshold,
+            status: this.getMetricStatus(varianceDeviation, this.qualityThresholds.anomalyThreshold),
             description: 'Deviation from expected variance of 0.25',
-            timestamp
+            timestamp: new Date()
         });
 
         // Autocorrelation metric
@@ -501,10 +529,10 @@ export class QualityController extends EventEmitter {
         metrics.push({
             name: 'Autocorrelation',
             value: Math.abs(autocorr),
-            threshold: this.qualityThresholds.get('autocorrelation_threshold')!,
-            status: this.getMetricStatus(Math.abs(autocorr), this.qualityThresholds.get('autocorrelation_threshold')!),
+            threshold: this.qualityThresholds.autocorrelationThreshold,
+            status: this.getMetricStatus(Math.abs(autocorr), this.qualityThresholds.autocorrelationThreshold),
             description: 'Serial correlation between consecutive bits',
-            timestamp
+            timestamp: new Date()
         });
 
         // Entropy metric
@@ -514,10 +542,10 @@ export class QualityController extends EventEmitter {
         metrics.push({
             name: 'Entropy',
             value: entropyRatio,
-            threshold: this.qualityThresholds.get('entropy_threshold')!,
-            status: this.getMetricStatus(entropyRatio, this.qualityThresholds.get('entropy_threshold')!, true),
+            threshold: this.qualityThresholds.entropyThreshold,
+            status: this.getMetricStatus(entropyRatio, this.qualityThresholds.entropyThreshold, true),
             description: 'Information content ratio',
-            timestamp
+            timestamp: new Date()
         });
 
         return metrics;
@@ -548,7 +576,7 @@ export class QualityController extends EventEmitter {
             const mean = ss.mean(window);
             const bias = Math.abs(mean - 0.5);
 
-            if (bias > this.qualityThresholds.get('bias_threshold')!) {
+            if (bias > this.qualityThresholds.biasThreshold) {
                 anomalies.push({
                     id: `bias_${i}_${Date.now()}`,
                     type: 'bias',
@@ -602,7 +630,7 @@ export class QualityController extends EventEmitter {
         for (let lag = 1; lag <= maxLag; lag++) {
             const correlation = this.calculateAutocorrelation(bits, lag);
 
-            if (Math.abs(correlation) > this.qualityThresholds.get('autocorrelation_threshold')!) {
+            if (Math.abs(correlation) > this.qualityThresholds.autocorrelationThreshold) {
                 anomalies.push({
                     id: `correlation_lag${lag}_${Date.now()}`,
                     type: 'correlation',
@@ -634,7 +662,7 @@ export class QualityController extends EventEmitter {
 
             intervals.forEach((interval, index) => {
                 const zScore = Math.abs((interval - mean) / stdDev);
-                if (zScore > this.qualityThresholds.get('outlier_threshold')!) {
+                if (zScore > this.qualityThresholds.anomalyThreshold) {
                     anomalies.push({
                         id: `outlier_timing_${index}_${Date.now()}`,
                         type: 'outlier',
@@ -689,7 +717,7 @@ export class QualityController extends EventEmitter {
             const mean = ss.mean(intervals);
             const coefficient_of_variation = ss.standardDeviation(intervals) / mean;
 
-            if (coefficient_of_variation > this.qualityThresholds.get('timing_deviation_threshold')!) {
+            if (coefficient_of_variation > this.qualityThresholds.anomalyThreshold) {
                 anomalies.push({
                     id: `timing_variability_${Date.now()}`,
                     type: 'timing',
@@ -854,8 +882,8 @@ export class QualityController extends EventEmitter {
             id: reportId,
             timestamp,
             overallScore: 0,
-            status: 'fail',
-            metrics: [],
+            status: 'failed',
+            metrics: this.getDefaultQualityMetrics(),
             anomalies: [],
             recommendations: ['No data available for quality assessment'],
             dataIntegrity: 0,
@@ -888,20 +916,17 @@ export class QualityController extends EventEmitter {
     }
 
     private calculateEntropy(bits: number[]): number {
-        const counts = [0, 0];
-        bits.forEach(bit => counts[bit]++);
+        if (bits.length === 0) return 0;
+
+        const counts = { 0: 0, 1: 0 };
+        bits.forEach(bit => counts[bit as 0 | 1]++);
 
         const total = bits.length;
-        let entropy = 0;
+        const p0 = counts[0] / total;
+        const p1 = counts[1] / total;
 
-        for (const count of counts) {
-            if (count > 0) {
-                const p = count / total;
-                entropy -= p * Math.log2(p);
-            }
-        }
-
-        return entropy;
+        if (p0 === 0 || p1 === 0) return 0;
+        return -(p0 * Math.log2(p0) + p1 * Math.log2(p1));
     }
 
     private calculateStatisticalPower(n: number, effectSize: number, alpha: number): number {
@@ -917,24 +942,34 @@ export class QualityController extends EventEmitter {
     }
 
     private erf(x: number): number {
-        const a1 = 0.254829592;
-        const a2 = -0.284496736;
-        const a3 = 1.421413741;
-        const a4 = -1.453152027;
-        const a5 = 1.061405429;
-        const p = 0.3275911;
+        // Approximation of error function using continued fraction
+        const a = 8 * (Math.PI - 3) / (3 * Math.PI * (4 - Math.PI));
+        const x2 = x * x;
+        const term = Math.sqrt(1 - Math.exp(-x2 * (4 / Math.PI + a * x2) / (1 + a * x2)));
+        return x >= 0 ? term : -term;
+    }
 
-        const sign = x >= 0 ? 1 : -1;
-        x = Math.abs(x);
+    private createMetric(name: string, value: number, threshold: number, description: string): QualityMetric {
+        return {
+            name,
+            value,
+            threshold,
+            status: this.getMetricStatus(value, threshold),
+            description,
+            timestamp: new Date()
+        };
+    }
 
-        const t = 1.0 / (1.0 + p * x);
-        const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-
-        return sign * y;
+    private calculateBias(values: number[]): number {
+        if (values.length === 0) return 0;
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        // For bits, expected mean is 0.5; for trial values, expected mean is 100
+        const expectedMean = values.every(v => v === 0 || v === 1) ? 0.5 : 100;
+        return Math.abs(mean - expectedMean) / expectedMean;
     }
 
     private async storeQualityReport(report: QualityReport): Promise<void> {
-        const db = this.database.getDatabase();
+        const db = this.database.getConnection();
         const stmt = db.prepare(`
       INSERT INTO quality_reports
       (id, timestamp, session_id, overall_score, status, metrics, anomalies,
@@ -954,5 +989,205 @@ export class QualityController extends EventEmitter {
             report.dataIntegrity,
             report.statisticalValidity
         );
+    }
+
+    private async getSuspiciousTrials(): Promise<RNGTrial[]> {
+        const db = this.database.getConnection();
+
+        // Define the expected structure of database rows
+        interface TrialRow {
+            id: string;
+            sessionId: string;
+            timestamp: number;
+            bit: number;
+            intention: string;
+            cumulativeDeviation: number;
+            trialValue: number;
+            experimentMode: string;
+            trialNumber: number;
+        }
+
+        const query = `
+            SELECT id, sessionId, timestamp, bit, intention, cumulativeDeviation,
+                   trialValue, experimentMode, trialNumber
+            FROM trials
+            WHERE ABS(cumulativeDeviation) > 3
+            OR bit IS NULL
+            ORDER BY timestamp DESC LIMIT 100`;
+
+        const rows = db.prepare(query).all() as TrialRow[];
+
+        return rows.map(row => ({
+            timestamp: new Date(row.timestamp),
+            trialValue: row.trialValue,
+            sessionId: row.sessionId,
+            experimentMode: row.experimentMode as any,
+            intention: row.intention as any,
+            trialNumber: row.trialNumber,
+            bit: row.bit,
+            value: row.trialValue,
+            id: row.id,
+            actualTrials: 1 // Single trial
+        }));
+    }
+
+    private async getFailedSessions(): Promise<RNGTrial[]> {
+        const db = this.database.getConnection();
+
+        // Define the expected structure of database rows
+        interface SessionRow {
+            id: string;
+            sessionId: string;
+            timestamp: number;
+            bit: number;
+            intention: string;
+            cumulativeDeviation: number;
+            trialValue: number;
+            experimentMode: string;
+            trialNumber: number;
+        }
+
+        const query = `
+            SELECT t.id, t.sessionId, t.timestamp, t.bit, t.intention, t.cumulativeDeviation,
+                   t.trialValue, t.experimentMode, t.trialNumber
+            FROM trials t
+            JOIN sessions s ON t.sessionId = s.id
+            WHERE s.status = 'failed'
+            ORDER BY t.timestamp DESC LIMIT 100`;
+
+        const rows = db.prepare(query).all() as SessionRow[];
+
+        return rows.map(row => ({
+            timestamp: new Date(row.timestamp),
+            trialValue: row.trialValue,
+            sessionId: row.sessionId,
+            experimentMode: row.experimentMode as any,
+            intention: row.intention as any,
+            trialNumber: row.trialNumber,
+            bit: row.bit,
+            value: row.trialValue,
+            id: row.id,
+            actualTrials: 1 // Single trial
+        }));
+    }
+
+    /**
+     * Calculate statistical validity of trials
+     */
+    calculateValidity(trials: RNGTrial[]): number {
+        if (trials.length === 0) return 0;
+
+        const trialValues = trials.map(t => t.trialValue);
+        const mean = trialValues.reduce((a, b) => a + b, 0) / trials.length;
+        const expectedMean = 100; // Expected mean for 200-bit trials
+
+        // Calculate validity based on deviation from expected mean
+        const deviation = Math.abs(mean - expectedMean) / expectedMean;
+        return Math.max(0, 1 - deviation);
+    }
+
+    /**
+     * Calculate reliability of measurements
+     */
+    calculateReliability(trials: RNGTrial[]): number {
+        if (trials.length < 2) return 0;
+
+        const trialValues = trials.map(t => t.trialValue);
+        const mean = trialValues.reduce((a, b) => a + b, 0) / trials.length;
+        const variance = trialValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / trials.length;
+        const expectedVariance = 50; // Expected variance for 200-bit trials
+
+        // Reliability based on consistency of variance
+        const varianceRatio = Math.min(variance, expectedVariance) / Math.max(variance, expectedVariance);
+        return varianceRatio;
+    }
+
+    /**
+     * Calculate consistency of trial generation
+     */
+    calculateConsistency(trials: RNGTrial[]): number {
+        if (trials.length < 2) return 1;
+
+        // Calculate temporal consistency
+        const intervals = [];
+        for (let i = 1; i < trials.length; i++) {
+            const currentTime = trials[i].timestamp instanceof Date
+                ? trials[i].timestamp.getTime()
+                : Number(trials[i].timestamp);
+            const prevTime = trials[i - 1].timestamp instanceof Date
+                ? trials[i - 1].timestamp.getTime()
+                : Number(trials[i - 1].timestamp);
+            intervals.push(currentTime - prevTime);
+        }
+
+        const meanInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const variance = intervals.reduce((sum, interval) =>
+            sum + Math.pow(interval - meanInterval, 2), 0) / intervals.length;
+        const stdDev = Math.sqrt(variance);
+
+        // High consistency = low coefficient of variation
+        const cv = meanInterval > 0 ? stdDev / meanInterval : 0;
+        return Math.max(0, 1 - cv);
+    }
+
+    /**
+     * Calculate statistical significance of results
+     */
+    calculateSignificance(trials: RNGTrial[]): number {
+        if (trials.length === 0) return 0;
+
+        const trialValues = trials.map(t => t.trialValue);
+        const mean = trialValues.reduce((a, b) => a + b, 0) / trials.length;
+        const expectedMean = 100;
+        const expectedStd = Math.sqrt(50); // Standard deviation for 200-bit trials
+
+        // Calculate z-score
+        const zScore = Math.abs(mean - expectedMean) / (expectedStd / Math.sqrt(trials.length));
+
+        // Convert z-score to significance level (0-1)
+        return Math.min(1, zScore / 3); // Normalize to 0-1 range
+    }
+
+    private convertMetricArrayToObject(metrics: any[]): QualityMetrics {
+        // Convert array of metrics to QualityMetrics object structure
+        const defaultMetrics = this.getDefaultQualityMetrics();
+
+        if (!Array.isArray(metrics) || metrics.length === 0) {
+            return defaultMetrics;
+        }
+
+        // If metrics is an array, try to extract meaningful values
+        return {
+            completeness: metrics.find(m => m.name === 'completeness')?.value || defaultMetrics.completeness,
+            consistency: metrics.find(m => m.name === 'consistency')?.value || defaultMetrics.consistency,
+            accuracy: metrics.find(m => m.name === 'accuracy')?.value || defaultMetrics.accuracy,
+            reliability: metrics.find(m => m.name === 'reliability')?.value || defaultMetrics.reliability,
+            validity: metrics.find(m => m.name === 'validity')?.value || defaultMetrics.validity,
+            significance: metrics.find(m => m.name === 'significance')?.value || defaultMetrics.significance
+        };
+    }
+
+    private getDefaultQualityMetrics(): QualityMetrics {
+        return {
+            completeness: 0,
+            consistency: 0,
+            accuracy: 0,
+            reliability: 0,
+            validity: 0,
+            significance: 0
+        };
+    }
+
+    private convertAnomaliesToQualityIssues(anomalies: AnomalyReport[]): QualityIssue[] {
+        return anomalies.map(anomaly => ({
+            type: anomaly.type as any,
+            severity: anomaly.severity,
+            description: anomaly.description,
+            affectedData: [`Index ${anomaly.location.startIndex || 0} to ${anomaly.location.endIndex || 0}`],
+            suggestedAction: anomaly.suggestedAction,
+            message: anomaly.description,
+            timestamp: anomaly.location.timestamp || new Date(),
+            sessionId: undefined
+        }));
     }
 }

@@ -58,7 +58,7 @@ export class DataRetentionManager {
             const exportResult = await this.exportTimeRange(
                 new Date(0), // Start from beginning
                 cutoffDate,
-                'archive'
+                'json' as const
             );
 
             if (!exportResult.success) {

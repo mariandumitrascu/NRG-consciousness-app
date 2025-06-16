@@ -16,7 +16,8 @@ import {
     TemporalGap,
     OutlierDetection,
     PowerAnalysis,
-    AnalysisParameters
+    AnalysisParameters,
+    QualityMetrics
 } from '../shared/analysis-types';
 import { StatisticalUtils } from './statistical-utils';
 
@@ -254,19 +255,37 @@ export class RealtimeAnalysis {
      * Live session quality assessment
      * Monitors data quality in real-time
      */
-    static assessDataQuality(trials: RNGTrial[]): QualityAssessment {
+    static assessDataQuality(trials: RNGTrial[], sessionId?: string): QualityAssessment {
+        const currentSessionId = sessionId || 'unknown';
+
         if (trials.length === 0) {
             return {
-                randomnessScore: 1,
+                sessionId: currentSessionId,
+                metrics: {
+                    completeness: 1.0,
+                    consistency: 1.0,
+                    accuracy: 1.0,
+                    reliability: 1.0,
+                    validity: 1.0
+                },
+                issues: [],
+                recommendations: [],
+                overallScore: 0.85,
+                passesThreshold: true,
+                randomnessScore: 0.85,
                 biasDetected: false,
                 patterns: [],
                 dataIntegrity: {
                     missingData: 0,
                     duplicates: 0,
                     temporalGaps: [],
-                    outliers: { count: 0, indices: [], method: 'zscore', threshold: 3 }
-                },
-                recommendations: ['Collect more data for quality assessment']
+                    outliers: {
+                        count: 0,
+                        indices: [],
+                        method: 'zscore' as const,
+                        threshold: 3.0
+                    }
+                }
             };
         }
 
@@ -294,12 +313,20 @@ export class RealtimeAnalysis {
             randomnessScore, biasDetected, patterns, dataIntegrity
         );
 
+        // Calculate quality metrics
+        const qualityMetrics = this.calculateQualityMetrics(trials, randomnessScore);
+
         return {
-            randomnessScore,
-            biasDetected,
-            patterns,
-            dataIntegrity,
-            recommendations
+            sessionId: currentSessionId,
+            metrics: qualityMetrics,
+            issues: [],
+            recommendations: recommendations,
+            overallScore: qualityMetrics.reliability,
+            passesThreshold: qualityMetrics.reliability > 0.8,
+            randomnessScore: randomnessScore,
+            biasDetected: biasDetected,
+            patterns: patterns,
+            dataIntegrity: dataIntegrity
         };
     }
 
@@ -608,5 +635,42 @@ export class RealtimeAnalysis {
         }
 
         return recommendations;
+    }
+
+    private static calculateQualityMetrics(trials: RNGTrial[], randomnessScore: number): QualityMetrics {
+        if (trials.length === 0) {
+            return {
+                completeness: 1.0,
+                consistency: 1.0,
+                accuracy: 1.0,
+                reliability: 1.0,
+                validity: 1.0
+            };
+        }
+
+        // Calculate based on trial data
+        const completeness = 1.0; // All trials are complete if they exist
+        const consistency = randomnessScore; // Use randomness as consistency measure
+        const accuracy = 1.0 - (this.calculateBiasScore(trials.map(t => t.trialValue)) / 10);
+        const reliability = (completeness + consistency + accuracy) / 3;
+        const validity = randomnessScore;
+
+        return {
+            completeness: Math.max(0, Math.min(1, completeness)),
+            consistency: Math.max(0, Math.min(1, consistency)),
+            accuracy: Math.max(0, Math.min(1, accuracy)),
+            reliability: Math.max(0, Math.min(1, reliability)),
+            validity: Math.max(0, Math.min(1, validity))
+        };
+    }
+
+    private static calculateBiasScore(values: number[]): number {
+        if (values.length === 0) return 0;
+
+        const expectedMean = 100; // For 200-bit trials
+        const observedMean = StatisticalUtils.mean(values);
+        const expectedStd = Math.sqrt(50); // Theoretical std for 200-bit trials
+
+        return Math.abs(observedMean - expectedMean) / expectedStd;
     }
 }

@@ -49,7 +49,7 @@ app.on('activate', () => {
 
 // Security: Prevent new window creation
 app.on('web-contents-created', (_, contents) => {
-    contents.on('new-window', (event) => {
-        event.preventDefault();
+    contents.setWindowOpenHandler(() => {
+        return { action: 'deny' };
     });
 });

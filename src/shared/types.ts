@@ -30,6 +30,16 @@ export interface RNGTrial {
 
     /** Sequential trial number within session */
     trialNumber: number;
+
+    // Additional properties accessed in advanced analysis code
+    /** Individual bit value (0 or 1) for bit-level analysis */
+    bit?: number;
+
+    /** Alias for trialValue for backward compatibility */
+    value?: number;
+
+    /** Unique identifier for database operations */
+    id?: string;
 }
 
 /**
@@ -62,6 +72,9 @@ export interface ExperimentSession {
 
     /** Session duration in milliseconds */
     duration?: number;
+
+    /** Actual number of trials completed */
+    actualTrials?: number;
 }
 
 /**

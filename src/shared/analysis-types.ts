@@ -1,3 +1,11 @@
+/**
+ * Analysis types for RNG consciousness research data processing
+ * Compatible with PEAR laboratory methodology and Global Consciousness Project standards
+ */
+
+// Re-export core types that are used in analysis
+export type { RNGTrial, IntentionType } from './types';
+
 export interface NetworkVarianceResult {
     netvar: number;              // The network variance value (sum of Z²)
     degreesOfFreedom: number;    // For chi-square calculation
@@ -15,6 +23,9 @@ export interface DeviceVarianceResult {
     probability: number;         // P-value
     significance: 'none' | 'marginal' | 'significant' | 'highly_significant';
     degreesOfFreedom: number;
+
+    /** Mean value for device-specific calculations */
+    deviceMean?: number;
 }
 
 export interface CumulativeResult {
@@ -33,6 +44,9 @@ export interface CumulativePoint {
     runningMean: number;
     zScore: number;
     runningVariance: number;
+
+    /** Index for array operations and data access */
+    index?: number;
 }
 
 export interface ExcursionPeriod {
@@ -109,12 +123,50 @@ export interface ChangePoint {
     magnitudeChange: number;     // Size of change
 }
 
+export interface QualityThresholds {
+    dataIntegrity: number;
+    statisticalValidity: number;
+    biasThreshold: number;
+    autocorrelationThreshold: number;
+    entropyThreshold: number;
+    anomalyThreshold: number;
+
+    // Add missing methods that are called
+    set(key: string, value: number): void;
+    get(key: string): number;
+}
+
 export interface QualityAssessment {
-    randomnessScore: number;     // 0-1, higher = more random
-    biasDetected: boolean;
-    patterns: PatternDetection[];
-    dataIntegrity: DataIntegrityCheck;
+    /** Session identifier this assessment applies to */
+    sessionId: string;
+
+    /** Quality metrics for the session */
+    metrics: QualityMetrics;
+
+    /** List of quality issues detected */
+    issues: QualityIssue[];
+
+    /** Recommendations for improvement */
     recommendations: string[];
+
+    /** Overall quality score (0-1) */
+    overallScore: number;
+
+    /** Whether the session passes quality threshold */
+    passesThreshold: boolean;
+
+    // Additional properties used in advanced research statistics
+    /** Randomness score (0-1, higher = more random) */
+    randomnessScore: number;
+
+    /** Whether bias was detected in the data */
+    biasDetected: boolean;
+
+    /** Detected patterns in the data */
+    patterns: PatternDetection[];
+
+    /** Data integrity check results */
+    dataIntegrity: DataIntegrityCheck;
 }
 
 export interface PatternDetection {
@@ -293,6 +345,16 @@ export interface AnalysisParameters {
     multipleComparisons?: 'none' | 'bonferroni' | 'bh' | 'holm';
     trendMethod?: 'linear' | 'polynomial' | 'spline';
     outlierHandling?: 'include' | 'exclude' | 'winsorize';
+
+    // Expected statistical parameters for RNG trials (200-bit sums)
+    expectedMean?: number;       // Expected mean (typically 100 for 200-bit trials)
+    expectedStd?: number;        // Expected standard deviation
+    minExcursionLength?: number; // Minimum length for significant excursions
+
+    // Additional analysis parameters
+    significanceLevel?: number;  // Default 0.05
+    powerThreshold?: number;     // Default 0.8
+    effectSizeThreshold?: number; // Minimum meaningful effect size
 }
 
 export interface IntentionPeriod {
@@ -367,6 +429,36 @@ export interface AnalysisConfig {
     statisticalTests: AnalysisTest[];
     groupBy: GroupingCriteria;
     compareWith: ComparisonDataset;
+}
+
+// Experiment Session Type
+export interface ExperimentSession {
+    id: string;
+    startTime: Date;
+    endTime: Date;
+    participant: string;
+    sessionType: 'intention' | 'baseline' | 'continuous';
+    targetTrials: number;
+    actualTrials: number;
+    notes?: string;
+    status: 'active' | 'completed' | 'terminated';
+    meanTrialValue: number;
+    zScore: number;
+    pValue: number;
+    effectSize: number;
+}
+
+// Analysis Result Type
+export interface AnalysisResult {
+    id: string;
+    sessionId: string;
+    analysisType: string;
+    timestamp: Date;
+    results: Record<string, any>;
+    significance: number;
+    effectSize: number;
+    confidenceInterval: [number, number];
+    metadata: Record<string, any>;
 }
 
 // Meta-Analysis Types
@@ -599,23 +691,38 @@ export interface QualityMetrics {
     accuracy: number;
     reliability: number;
     validity: number;
-}
 
-export interface QualityAssessment {
-    sessionId: string;
-    metrics: QualityMetrics;
-    issues: QualityIssue[];
-    recommendations: string[];
-    overallScore: number;
-    passesThreshold: boolean;
+    // Add significance property that is being accessed
+    significance?: number;
 }
 
 export interface QualityIssue {
-    type: 'missing_data' | 'inconsistent_data' | 'statistical_anomaly' | 'timing_issue';
+    type: 'missing_data' | 'inconsistent_data' | 'statistical_anomaly' | 'timing_issue' | 'data_quality';
     severity: 'low' | 'medium' | 'high' | 'critical';
     description: string;
     affectedData: string[];
     suggestedAction: string;
+
+    // Additional properties accessed in code
+    message: string;
+    data?: any;
+    timestamp: Date;
+    sessionId?: string;
+}
+
+export interface QualityReport {
+    id: string;
+    sessionId: string;
+    timestamp: Date;
+    overallScore: number;
+    issues: QualityIssue[];
+    recommendations: string[];
+    metrics: QualityMetrics;
+    passesThreshold: boolean;
+    status: 'pending' | 'completed' | 'failed';
+    anomalies: QualityIssue[];
+    dataIntegrity: number;
+    statisticalValidity: number;
 }
 
 // Research Hypothesis Types
@@ -680,7 +787,7 @@ export interface SequentialAnalysisResult {
 // Learning Curve Types
 export interface LearningCurveData {
     sessionNumber: number;
-    timestamp: number;
+    timestamp: number;  // Unix timestamp for consistent arithmetic operations
     performance: number;
     cumulativePerformance: number;
     learningRate: number;
