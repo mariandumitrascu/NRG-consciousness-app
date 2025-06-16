@@ -208,7 +208,7 @@ export class TrialRepository {
             return rows.map(row => this.dbRowToTrial(row));
         } catch (error) {
             console.error('Failed to get trials by intention:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -283,7 +283,7 @@ export class TrialRepository {
             };
         } catch (error) {
             console.error('Failed to get trial statistics:', error);
-            throw new Error(`Statistics query failed: ${error.message}`);
+            throw new Error(`Statistics query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -305,7 +305,7 @@ export class TrialRepository {
             return result.changes;
         } catch (error) {
             console.error('Failed to delete old trials:', error);
-            throw new Error(`Deletion failed: ${error.message}`);
+            throw new Error(`Deletion failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

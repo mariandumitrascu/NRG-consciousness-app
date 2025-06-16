@@ -180,7 +180,7 @@ export class QualityController extends EventEmitter {
 
         const report: QualityReport = {
             id: reportId,
-            sessionId: data.length > 0 ? data[0].sessionId : 'unknown',
+            sessionId: recentData.length > 0 ? recentData[0].sessionId : 'unknown',
             timestamp,
             overallScore,
             issues: this.convertAnomaliesToQualityIssues(anomalies),
@@ -203,7 +203,7 @@ export class QualityController extends EventEmitter {
         this.emit('qualityReport', report);
 
         // Check for critical issues
-        if (status === 'fail' || anomalies.some(a => a.severity === 'critical')) {
+        if (status === 'failed' || anomalies.some(a => a.severity === 'critical')) {
             await this.generateQualityAlert({
                 type: 'data_quality',
                 severity: 'critical',
@@ -883,12 +883,15 @@ export class QualityController extends EventEmitter {
     private createEmptyQualityReport(reportId: string, timestamp: Date): QualityReport {
         return {
             id: reportId,
+            sessionId: 'unknown',
             timestamp,
             overallScore: 0,
             status: 'failed',
             metrics: this.getDefaultQualityMetrics(),
             anomalies: [],
+            issues: [],
             recommendations: ['No data available for quality assessment'],
+            passesThreshold: false,
             dataIntegrity: 0,
             statisticalValidity: 0
         };

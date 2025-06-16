@@ -68,7 +68,7 @@ export class IntentionRepository {
             return periodId;
         } catch (error) {
             console.error('Failed to start intention period:', error);
-            throw new Error(`Intention period start failed: ${error.message}`);
+            throw new Error(`Intention period start failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -94,7 +94,7 @@ export class IntentionRepository {
             console.log(`Ended intention period: ${periodId}`);
         } catch (error) {
             console.error('Failed to end intention period:', error);
-            throw new Error(`Intention period end failed: ${error.message}`);
+            throw new Error(`Intention period end failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -189,7 +189,7 @@ export class IntentionRepository {
             return rows.map(row => this.dbRowToIntentionPeriod(row));
         } catch (error) {
             console.error('Failed to get intention periods:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -211,7 +211,7 @@ export class IntentionRepository {
             );
         } catch (error) {
             console.error('Failed to get trials for period:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -364,7 +364,7 @@ export class IntentionRepository {
             console.log(`Updated intention period notes: ${periodId}`);
         } catch (error) {
             console.error('Failed to update intention period notes:', error);
-            throw new Error(`Update failed: ${error.message}`);
+            throw new Error(`Update failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -386,7 +386,7 @@ export class IntentionRepository {
             console.log(`Deleted intention period: ${periodId}`);
         } catch (error) {
             console.error('Failed to delete intention period:', error);
-            throw new Error(`Deletion failed: ${error.message}`);
+            throw new Error(`Deletion failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

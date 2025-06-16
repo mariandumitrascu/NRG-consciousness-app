@@ -401,7 +401,7 @@ export class BackgroundAnalyzer extends EventEmitter {
     private async analyzeTimeOfDayCorrelation(trials: RNGTrial[]): Promise<CorrelationResult | null> {
         if (trials.length < 24) return null;
 
-        const hourlyData = new Array(24).fill(0).map(() => ({ trials: [], sum: 0, count: 0 }));
+        const hourlyData = new Array(24).fill(0).map(() => ({ trials: [] as RNGTrial[], sum: 0, count: 0 }));
 
         // Group trials by hour
         trials.forEach(trial => {

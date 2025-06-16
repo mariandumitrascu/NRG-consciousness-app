@@ -71,7 +71,7 @@ export class SessionRepository {
             return sessionId;
         } catch (error) {
             console.error('Failed to create session:', error);
-            throw new Error(`Session creation failed: ${error.message}`);
+            throw new Error(`Session creation failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -129,7 +129,7 @@ export class SessionRepository {
             console.log(`Updated session: ${sessionId}`);
         } catch (error) {
             console.error('Failed to update session:', error);
-            throw new Error(`Session update failed: ${error.message}`);
+            throw new Error(`Session update failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -146,7 +146,7 @@ export class SessionRepository {
             return row ? this.dbRowToSession(row) : null;
         } catch (error) {
             console.error('Failed to get session:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -200,7 +200,7 @@ export class SessionRepository {
             return rows.map(row => this.dbRowToSession(row));
         } catch (error) {
             console.error('Failed to get recent sessions:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -264,7 +264,7 @@ export class SessionRepository {
             };
         } catch (error) {
             console.error('Failed to get session stats:', error);
-            throw new Error(`Statistics calculation failed: ${error.message}`);
+            throw new Error(`Statistics calculation failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -314,7 +314,7 @@ export class SessionRepository {
             const stmt = this.db.prepare(query);
             const rows = stmt.all(...params);
 
-            return rows.map(row => ({
+            return rows.map((row: any) => ({
                 id: row.id,
                 startTime: new Date(row.start_time),
                 endTime: row.end_time ? new Date(row.end_time) : null,
@@ -329,7 +329,7 @@ export class SessionRepository {
             }));
         } catch (error) {
             console.error('Failed to get session summaries:', error);
-            throw new Error(`Query failed: ${error.message}`);
+            throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -400,7 +400,7 @@ export class SessionRepository {
             console.log(`Deleted session: ${sessionId}`);
         } catch (error) {
             console.error('Failed to delete session:', error);
-            throw new Error(`Session deletion failed: ${error.message}`);
+            throw new Error(`Session deletion failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

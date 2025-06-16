@@ -10,7 +10,7 @@
  */
 
 import { DatabaseManager } from '../database';
-import { ExportMetadata, ValidationResult } from '../shared/types';
+import { ExportMetadata, ValidationResult, RNGTrial } from '../shared/types';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
