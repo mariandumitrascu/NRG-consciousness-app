@@ -130,7 +130,7 @@ export const QuickIntentionButton: React.FC<QuickIntentionButtonProps> = ({
             );
         }
 
-        const duration = Date.now() - currentPeriod.startTime.getTime();
+        const duration = currentPeriod.startTime ? Date.now() - currentPeriod.startTime.getTime() : 0;
         const durationText = formatDuration(duration);
         const intentionColor = getIntentionColor(currentPeriod.intention);
 
@@ -188,7 +188,7 @@ export const QuickIntentionButton: React.FC<QuickIntentionButtonProps> = ({
             {renderConfirmationDialog()}
 
             {/* Styles */}
-            <style jsx>{`
+            <style>{`
                 .quick-intention-button {
                     color: white;
                 }

@@ -26,12 +26,22 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
     onPeriodSelect(period);
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (date: Date | null | undefined) => {
+    if (!date) return 'Invalid Time';
+    try {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (error) {
+      return 'Invalid Time';
+    }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString();
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return 'Invalid Date';
+    try {
+      return date.toLocaleDateString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   return (
@@ -51,7 +61,7 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
               onClick={() => {
                 const now = new Date();
                 const start = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours
-                onTimeRangeChange({ start, end: now });
+                onTimeRangeChange({ start, end: now, label: 'Last 24 Hours', type: 'day' });
               }}
             >
               24H
@@ -61,7 +71,7 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
               onClick={() => {
                 const now = new Date();
                 const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days
-                onTimeRangeChange({ start, end: now });
+                onTimeRangeChange({ start, end: now, label: 'Last 7 Days', type: 'week' });
               }}
             >
               7D
@@ -71,7 +81,7 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
               onClick={() => {
                 const now = new Date();
                 const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days
-                onTimeRangeChange({ start, end: now });
+                onTimeRangeChange({ start, end: now, label: 'Last 30 Days', type: 'month' });
               }}
             >
               30D
@@ -121,11 +131,11 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
                 <div className="event-content">
                   <div className="event-type">{event.type.toUpperCase()}</div>
                   <div className="event-description">{event.description}</div>
-                  {event.metadata && (
+                  {(event as any).metadata && (
                     <div className="event-metadata">
-                      {Object.entries(event.metadata).map(([key, value]) => (
+                      {Object.entries((event as any).metadata).map(([key, value]) => (
                         <span key={key} className="metadata-item">
-                          {key}: {value}
+                          {key}: {String(value)}
                         </span>
                       ))}
                     </div>
@@ -149,12 +159,12 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
                   {formatTime(period.startTime)} - {period.endTime ? formatTime(period.endTime) : 'Active'}
                 </div>
                 <div className="period-note">
-                  {period.note || 'No note'}
+                  {period.notes || 'No note'}
                 </div>
                 <div className="period-stats">
-                  <span>Trials: {period.trials.length}</span>
-                  {period.analysis && (
-                    <span>Z-Score: {period.analysis.zScore.toFixed(3)}</span>
+                  <span>Trials: {(period as any).trials?.length || 0}</span>
+                  {(period as any).analysis && (
+                    <span>Z-Score: {(period as any).analysis.zScore.toFixed(3)}</span>
                   )}
                 </div>
               </div>

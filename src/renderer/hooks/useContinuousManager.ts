@@ -64,7 +64,15 @@ export const useContinuousManager = (): ContinuousManagerHook => {
                     },
                     lastError: null,
                     uptime: Date.now() - 60000,
-                    missedTrials: 0
+                    missedTrials: 0,
+                    lastCheck: new Date(),
+                    overall: 'healthy' as const,
+                    components: {
+                        collector: state.isCollecting ? 'healthy' as const : 'inactive' as const,
+                        analyzer: 'healthy' as const,
+                        database: 'healthy' as const
+                    },
+                    cpuUsage: 15 + Math.random() * 20
                 },
                 todayStats: {
                     trialsCollected: Math.floor(Math.random() * 86400) + 1000,

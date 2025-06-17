@@ -176,7 +176,7 @@ export const ContinuousView: React.FC = () => {
             );
         }
 
-        const duration = Date.now() - currentPeriod.startTime.getTime();
+        const duration = currentPeriod.startTime ? Date.now() - currentPeriod.startTime.getTime() : 0;
         const durationText = formatDuration(duration);
         const intentionColor = currentPeriod.intention === 'high' ? '#2196F3' : '#FF9800';
 
@@ -327,7 +327,7 @@ export const ContinuousView: React.FC = () => {
                         <div className="timeline-section">
                             <ContinuousTimeline
                                 timeRange={selectedTimeRange}
-                                trials={timelineData}
+                                data={timelineData}
                                 intentionPeriods={status?.currentIntentionPeriod ? [status.currentIntentionPeriod] : []}
                                 significantEvents={significantEvents}
                                 onTimeRangeChange={handleTimeRangeChange}
@@ -341,7 +341,7 @@ export const ContinuousView: React.FC = () => {
             </div>
 
             {/* Styles */}
-            <style jsx>{`
+            <style>{`
                 .continuous-view {
                     min-height: 100vh;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
