@@ -137,7 +137,7 @@ export class AdvancedResearchStats {
             throw new Error(`Credible interval not implemented for ${posterior.type} distribution`);
         }
 
-        private static calculateLogMarginalLikelihood(
+        public static calculateLogMarginalLikelihood(
             sampleMean: number,
             sampleVariance: number,
             n: number,
@@ -245,7 +245,7 @@ export class AdvancedResearchStats {
             return Math.max(requiredN, currentN);
         }
 
-        private static estimateCurrentEffect(data: RNGTrial[]): number {
+        public static estimateCurrentEffect(data: RNGTrial[]): number {
             const values = data.map(t => t.trialValue);
             const mean = StatisticalUtils.mean(values);
             return Math.abs(mean - 100); // Deviation from expected mean
@@ -340,7 +340,7 @@ export class AdvancedResearchStats {
             };
         }
 
-        private static calculateSessionEffectSize(session: ExperimentSession): EffectSizeData {
+        public static calculateSessionEffectSize(session: ExperimentSession): EffectSizeData {
             // This would typically retrieve trial data for the session
             // For now, using placeholder calculation
             const effectSize = Math.random() * 0.5 - 0.25; // Random effect between -0.25 and 0.25
@@ -359,7 +359,7 @@ export class AdvancedResearchStats {
             };
         }
 
-        private static calculateConfidenceInterval(
+        public static calculateConfidenceInterval(
             effect: number,
             standardError: number,
             level: number = 0.95
@@ -369,7 +369,7 @@ export class AdvancedResearchStats {
             return [effect - margin, effect + margin];
         }
 
-        private static calculateHeterogeneity(
+        public static calculateHeterogeneity(
             effects: EffectSizeData[],
             pooledEffect: number
         ): { Q: number; I2: number; pValue: number } {
@@ -385,7 +385,7 @@ export class AdvancedResearchStats {
             return { Q, I2, pValue };
         }
 
-        private static calculateBetweenStudyVariance(
+        public static calculateBetweenStudyVariance(
             effects: EffectSizeData[],
             pooledEffect: number,
             Q: number
@@ -398,7 +398,7 @@ export class AdvancedResearchStats {
             return Math.max(0, (Q - df) / c);
         }
 
-        private static createForestPlotData(
+        public static createForestPlotData(
             effects: EffectSizeData[],
             pooledResult: EffectSizeData
         ): ForestPlotData {

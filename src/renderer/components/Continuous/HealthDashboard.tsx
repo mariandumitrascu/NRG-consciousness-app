@@ -204,7 +204,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         .last-check {
           color: #94a3b8;
           font-size: 12px;
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
         }
 
         .refresh-button {
@@ -281,7 +281,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         .uptime {
           color: #94a3b8;
           font-size: 14px;
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
         }
 
         .components-status {
@@ -380,7 +380,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         .metric-text {
           color: #94a3b8;
           font-size: 12px;
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
           min-width: 40px;
           text-align: right;
         }
@@ -410,7 +410,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         .summary-value {
           color: #ffffff;
           font-size: 13px;
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
         }
 
         @media (min-width: 768px) {

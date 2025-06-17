@@ -260,12 +260,12 @@ export const IntentionPeriodControls: React.FC<IntentionPeriodControlsProps> = (
         }
 
         .period-time {
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
           color: #10b981;
         }
 
         .period-duration {
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
           font-weight: 600;
         }
 

@@ -333,7 +333,7 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
         .event-time {
           color: #94a3b8;
           font-size: 12px;
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
           min-width: 60px;
         }
 
@@ -388,7 +388,7 @@ export const ContinuousTimeline: React.FC<ContinuousTimelineProps> = ({
           color: #ffffff;
           font-size: 13px;
           font-weight: 500;
-          font-family: 'SF Mono', Monaco, monospace;
+          font-family: Monaco, Consolas, 'Courier New', monospace;
         }
 
         .period-note {

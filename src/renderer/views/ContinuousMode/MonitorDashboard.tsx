@@ -265,7 +265,7 @@ export const MonitorDashboard: React.FC<MonitorDashboardProps> = ({
                 }
 
                 .current-time {
-                    font-family: 'Courier New', monospace;
+                    font-family: Monaco, Consolas, 'Courier New', monospace;
                     font-size: 18px;
                     color: rgba(255, 255, 255, 0.8);
                 }
@@ -442,7 +442,7 @@ export const MonitorDashboard: React.FC<MonitorDashboardProps> = ({
                 .event-significance {
                     font-size: 10px;
                     color: rgba(255, 255, 255, 0.6);
-                    font-family: 'Courier New', monospace;
+                    font-family: Monaco, Consolas, 'Courier New', monospace;
                 }
 
                 /* Responsive design */

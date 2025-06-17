@@ -43,9 +43,9 @@
     --spacing-xl: 2rem;
     --spacing-xxl: 3rem;
 
-    --font-heading: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --font-monospace: Monaco, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --font-heading: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-monospace: Monaco, Consolas, "Courier New", monospace;
 
     --text-xs: 0.75rem;
     --text-sm: 0.875rem;
