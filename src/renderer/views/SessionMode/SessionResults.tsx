@@ -210,7 +210,7 @@ export const SessionResults: React.FC<SessionResultsProps> = ({
                 </Button>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .session-results {
                     width: 100%;
                     max-width: 1200px;

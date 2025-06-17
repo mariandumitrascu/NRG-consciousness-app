@@ -276,7 +276,7 @@ export const CumulativeChart: React.FC<CumulativeChartProps> = ({
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .cumulative-chart {
                     width: 100%;
                     display: flex;

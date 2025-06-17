@@ -248,7 +248,7 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                 </div>
             )}
 
-            <style jsx>{`
+            <style>{`
                 .session-controls {
                     display: flex;
                     align-items: center;

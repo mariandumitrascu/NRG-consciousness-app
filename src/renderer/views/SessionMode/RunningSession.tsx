@@ -173,7 +173,7 @@ export const RunningSession: React.FC<RunningSessionProps> = ({
                 </span>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .running-session {
                     width: 100%;
                     height: 100vh;

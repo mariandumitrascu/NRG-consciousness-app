@@ -241,7 +241,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onStartSession, isLo
                 </form>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .session-setup {
                     width: 100%;
                     max-width: 800px;

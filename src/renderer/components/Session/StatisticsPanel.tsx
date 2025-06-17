@@ -190,7 +190,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .statistics-panel {
                     width: 100%;
                     color: rgba(255, 255, 255, 0.9);

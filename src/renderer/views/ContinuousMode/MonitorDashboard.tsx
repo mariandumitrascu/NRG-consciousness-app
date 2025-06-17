@@ -246,7 +246,7 @@ export const MonitorDashboard: React.FC<MonitorDashboardProps> = ({
             </div>
 
             {/* Styles */}
-            <style jsx>{`
+            <style>{`
                 .monitor-dashboard {
                     color: white;
                 }
