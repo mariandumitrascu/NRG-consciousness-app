@@ -1,91 +1,82 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ContinuousStatus, IntentionPeriod, HealthStatus } from '../../shared/types';
+import {
+    ContinuousStatus,
+    IntentionPeriod,
+    HealthStatus,
+    TimeRange,
+    SignificantEvent,
+    TimelinePoint
+} from '../../shared/types';
 
 interface ContinuousManagerState {
-    status: ContinuousStatus;
-    isActive: boolean;
-    currentPeriod: IntentionPeriod | null;
-    health: HealthStatus;
+    status: ContinuousStatus | null;
+    isCollecting: boolean;
     error: string | null;
 }
 
 export interface ContinuousManagerHook {
     // State
-    status: ContinuousStatus;
-    isActive: boolean;
-    currentPeriod: IntentionPeriod | null;
-    health: HealthStatus;
+    status: ContinuousStatus | null;
+    isCollecting: boolean;
     error: string | null;
 
     // Actions
-    startContinuous: () => Promise<void>;
-    stopContinuous: () => Promise<void>;
-    startIntentionPeriod: (note?: string) => Promise<void>;
-    stopIntentionPeriod: () => Promise<void>;
+    startCollection: () => Promise<void>;
+    stopCollection: () => Promise<void>;
+    startIntentionPeriod: (intention: 'high' | 'low', notes?: string) => Promise<void>;
+    endIntentionPeriod: () => Promise<void>;
+    updateIntentionNotes: (notes: string) => Promise<void>;
+    getTimelineData: (range: TimeRange) => Promise<TimelinePoint[]>;
+    getSignificantEvents: (range: TimeRange) => Promise<SignificantEvent[]>;
     refreshStatus: () => Promise<void>;
 }
 
 export const useContinuousManager = (): ContinuousManagerHook => {
     const [state, setState] = useState<ContinuousManagerState>({
-        status: {
-            isActive: false,
-            totalTrials: 0,
-            dailyTrials: 0,
-            currentRate: 0,
-            uptime: 0,
-            lastTrialTime: null,
-            errors: 0,
-            restarts: 0
-        },
-        isActive: false,
-        currentPeriod: null,
-        health: {
-            overall: 'healthy',
-            components: {
-                collector: 'healthy',
-                analyzer: 'healthy',
-                database: 'healthy'
-            },
-            lastCheck: new Date(),
-            uptime: 0,
-            memoryUsage: 0,
-            cpuUsage: 0
-        },
+        status: null,
+        isCollecting: false,
         error: null
     });
 
     const refreshStatus = useCallback(async () => {
         try {
             // In a real implementation, this would call the main process
-            // For now, we'll simulate the status
+            // For now, we'll simulate the proper status structure
             const mockStatus: ContinuousStatus = {
-                isActive: state.isActive,
-                totalTrials: state.status.totalTrials + (state.isActive ? Math.floor(Math.random() * 5) : 0),
-                dailyTrials: Math.floor(Math.random() * 86400), // Simulate daily trials
-                currentRate: state.isActive ? 1.0 + (Math.random() - 0.5) * 0.1 : 0,
-                uptime: state.isActive ? state.status.uptime + 30 : 0,
-                lastTrialTime: state.isActive ? new Date() : null,
-                errors: state.status.errors,
-                restarts: state.status.restarts
-            };
-
-            const mockHealth: HealthStatus = {
-                overall: 'healthy',
-                components: {
-                    collector: state.isActive ? 'healthy' : 'inactive',
-                    analyzer: state.isActive ? 'healthy' : 'inactive',
-                    database: 'healthy'
+                isRunning: state.isCollecting,
+                startTime: state.isCollecting ? new Date(Date.now() - 60000) : null,
+                totalTrials: Math.floor(Math.random() * 10000) + 1000,
+                currentRate: state.isCollecting ? 1.0 + (Math.random() - 0.5) * 0.1 : 0,
+                currentIntentionPeriod: null, // No active intention period for now
+                systemHealth: {
+                    status: 'healthy',
+                    rngStatus: 'healthy',
+                    dataRate: {
+                        current: state.isCollecting ? 1.0 : 0,
+                        expected: 1.0,
+                        status: 'healthy'
+                    },
+                    databaseStatus: 'healthy',
+                    memoryUsage: {
+                        current: 45 + Math.random() * 10,
+                        peak: 65,
+                        status: 'healthy'
+                    },
+                    lastError: null,
+                    uptime: Date.now() - 60000,
+                    missedTrials: 0
                 },
-                lastCheck: new Date(),
-                uptime: mockStatus.uptime,
-                memoryUsage: 45 + Math.random() * 10,
-                cpuUsage: 5 + Math.random() * 15
+                todayStats: {
+                    trialsCollected: Math.floor(Math.random() * 86400) + 1000,
+                    intentionPeriods: Math.floor(Math.random() * 5),
+                    averageDeviation: 2.5 + Math.random() * 2,
+                    significantEvents: Math.floor(Math.random() * 3)
+                }
             };
 
             setState(prev => ({
                 ...prev,
                 status: mockStatus,
-                health: mockHealth,
                 error: null
             }));
         } catch (error) {
@@ -94,12 +85,13 @@ export const useContinuousManager = (): ContinuousManagerHook => {
                 error: error instanceof Error ? error.message : 'Unknown error'
             }));
         }
-    }, [state.isActive, state.status.totalTrials, state.status.uptime, state.status.errors, state.status.restarts]);
+    }, [state.isCollecting]);
 
-    const startContinuous = useCallback(async () => {
+    const startCollection = useCallback(async () => {
         try {
-            setState(prev => ({ ...prev, isActive: true, error: null }));
+            setState(prev => ({ ...prev, isCollecting: true, error: null }));
             // In real implementation: await window.electronAPI.startContinuous();
+            console.log('Starting continuous collection...');
         } catch (error) {
             setState(prev => ({
                 ...prev,
@@ -108,15 +100,15 @@ export const useContinuousManager = (): ContinuousManagerHook => {
         }
     }, []);
 
-    const stopContinuous = useCallback(async () => {
+    const stopCollection = useCallback(async () => {
         try {
             setState(prev => ({
                 ...prev,
-                isActive: false,
-                currentPeriod: null,
+                isCollecting: false,
                 error: null
             }));
             // In real implementation: await window.electronAPI.stopContinuous();
+            console.log('Stopping continuous collection...');
         } catch (error) {
             setState(prev => ({
                 ...prev,
@@ -125,23 +117,26 @@ export const useContinuousManager = (): ContinuousManagerHook => {
         }
     }, []);
 
-    const startIntentionPeriod = useCallback(async (note?: string) => {
+    const startIntentionPeriod = useCallback(async (intention: 'high' | 'low', notes?: string) => {
         try {
             const period: IntentionPeriod = {
                 id: Date.now().toString(),
                 startTime: new Date(),
                 endTime: null,
-                note: note || '',
-                trials: [],
-                analysis: null
+                intention,
+                notes: notes || ''
             };
 
             setState(prev => ({
                 ...prev,
-                currentPeriod: period,
+                status: prev.status ? {
+                    ...prev.status,
+                    currentIntentionPeriod: period
+                } : prev.status,
                 error: null
             }));
-            // In real implementation: await window.electronAPI.startIntentionPeriod(period);
+            // In real implementation: await window.electronAPI.startIntentionPeriod(intention, notes);
+            console.log(`Starting ${intention} intention period...`);
         } catch (error) {
             setState(prev => ({
                 ...prev,
@@ -150,28 +145,95 @@ export const useContinuousManager = (): ContinuousManagerHook => {
         }
     }, []);
 
-    const stopIntentionPeriod = useCallback(async () => {
+    const endIntentionPeriod = useCallback(async () => {
         try {
-            if (state.currentPeriod) {
-                const endedPeriod = {
-                    ...state.currentPeriod,
-                    endTime: new Date()
-                };
-
-                setState(prev => ({
-                    ...prev,
-                    currentPeriod: null,
-                    error: null
-                }));
-                // In real implementation: await window.electronAPI.stopIntentionPeriod(endedPeriod);
-            }
+            setState(prev => ({
+                ...prev,
+                status: prev.status ? {
+                    ...prev.status,
+                    currentIntentionPeriod: null
+                } : prev.status,
+                error: null
+            }));
+            // In real implementation: await window.electronAPI.endIntentionPeriod();
+            console.log('Ending intention period...');
         } catch (error) {
             setState(prev => ({
                 ...prev,
-                error: error instanceof Error ? error.message : 'Failed to stop intention period'
+                error: error instanceof Error ? error.message : 'Failed to end intention period'
             }));
         }
-    }, [state.currentPeriod]);
+    }, []);
+
+    const updateIntentionNotes = useCallback(async (notes: string) => {
+        try {
+            setState(prev => ({
+                ...prev,
+                status: prev.status && prev.status.currentIntentionPeriod ? {
+                    ...prev.status,
+                    currentIntentionPeriod: {
+                        ...prev.status.currentIntentionPeriod,
+                        notes
+                    }
+                } : prev.status,
+                error: null
+            }));
+            // In real implementation: await window.electronAPI.updateIntentionNotes(notes);
+            console.log('Updating intention notes...');
+        } catch (error) {
+            setState(prev => ({
+                ...prev,
+                error: error instanceof Error ? error.message : 'Failed to update intention notes'
+            }));
+        }
+    }, []);
+
+    const getTimelineData = useCallback(async (range: TimeRange): Promise<TimelinePoint[]> => {
+        // Mock timeline data for now
+        const points: TimelinePoint[] = [];
+        const startTime = range.start.getTime();
+        const endTime = range.end.getTime();
+        const interval = (endTime - startTime) / 100; // 100 data points
+
+        for (let i = 0; i < 100; i++) {
+            points.push({
+                timestamp: new Date(startTime + i * interval),
+                value: 100 + (Math.random() - 0.5) * 10,
+                cumulativeDeviation: (Math.random() - 0.5) * 20,
+                intentionPeriod: null,
+                isSignificant: Math.random() < 0.05 // 5% chance of significant event
+            });
+        }
+
+        return points;
+    }, []);
+
+    const getSignificantEvents = useCallback(async (range: TimeRange): Promise<SignificantEvent[]> => {
+        // Mock significant events for now
+        const events: SignificantEvent[] = [];
+
+        if (Math.random() < 0.3) { // 30% chance of having events
+            events.push({
+                id: 'event-1',
+                timestamp: new Date(range.start.getTime() + Math.random() * (range.end.getTime() - range.start.getTime())),
+                type: 'deviation_spike',
+                severity: 'medium',
+                description: 'Unusual deviation pattern detected',
+                significance: {
+                    zScore: 2.1 + Math.random(),
+                    pValue: 0.02 + Math.random() * 0.03
+                },
+                dataRange: {
+                    startTime: range.start,
+                    endTime: range.end,
+                    trialCount: 100
+                },
+                notified: false
+            });
+        }
+
+        return events;
+    }, []);
 
     // Auto-refresh status every 30 seconds
     useEffect(() => {
@@ -186,14 +248,15 @@ export const useContinuousManager = (): ContinuousManagerHook => {
 
     return {
         status: state.status,
-        isActive: state.isActive,
-        currentPeriod: state.currentPeriod,
-        health: state.health,
+        isCollecting: state.isCollecting,
         error: state.error,
-        startContinuous,
-        stopContinuous,
+        startCollection,
+        stopCollection,
         startIntentionPeriod,
-        stopIntentionPeriod,
+        endIntentionPeriod,
+        updateIntentionNotes,
+        getTimelineData,
+        getSignificantEvents,
         refreshStatus
     };
 };
