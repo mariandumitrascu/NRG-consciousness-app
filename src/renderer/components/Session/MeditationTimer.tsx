@@ -281,7 +281,7 @@ export const MeditationTimer: React.FC<MeditationTimerProps> = ({
                 .time-display {
                     font-size: 3rem;
                     font-weight: 300;
-                    font-family: 'Menlo', 'Monaco', monospace;
+                    font-family: Monaco, Consolas, 'Courier New', monospace;
                     display: block;
                 }
 

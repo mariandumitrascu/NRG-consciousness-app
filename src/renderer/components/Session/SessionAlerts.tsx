@@ -218,7 +218,7 @@ export const SessionAlerts: React.FC<SessionAlertsProps> = ({
                 }
 
                 .alert__detail-value {
-                    font-family: 'Menlo', 'Monaco', monospace;
+                    font-family: Monaco, Consolas, 'Courier New', monospace;
                     color: #1f2937;
                 }
 

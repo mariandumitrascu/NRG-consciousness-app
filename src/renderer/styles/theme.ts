@@ -108,9 +108,9 @@ export const theme: Theme = {
         xxl: '3rem'       // 48px
     },
     typography: {
-        heading: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-        body: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-        monospace: 'Monaco, "Cascadia Code", "JetBrains Mono", Consolas, monospace',
+        heading: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+        body: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+        monospace: 'Monaco, Consolas, "Courier New", monospace',
         sizes: {
             xs: '0.75rem',    // 12px
             sm: '0.875rem',   // 14px
