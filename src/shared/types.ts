@@ -568,6 +568,22 @@ export interface HealthStatus {
 
     /** Missed trial intervals */
     missedTrials: number;
+
+    /** Last health check timestamp */
+    lastCheck: Date;
+
+    /** Overall system health level */
+    overall: 'healthy' | 'warning' | 'error';
+
+    /** Component-specific health status */
+    components: {
+        collector: 'healthy' | 'warning' | 'error' | 'inactive';
+        analyzer: 'healthy' | 'warning' | 'error' | 'inactive';
+        database: 'healthy' | 'warning' | 'error' | 'inactive';
+    };
+
+    /** CPU usage percentage */
+    cpuUsage: number;
 }
 
 /**

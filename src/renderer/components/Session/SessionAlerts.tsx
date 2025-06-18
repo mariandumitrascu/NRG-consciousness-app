@@ -109,7 +109,7 @@ export const SessionAlerts: React.FC<SessionAlertsProps> = ({
                 </div>
             ))}
 
-            <style jsx>{`
+            <style>{`
                 .session-alerts {
                     position: fixed;
                     top: 20px;

@@ -119,7 +119,7 @@ export const MeditationTimer: React.FC<MeditationTimerProps> = ({
                     <p>You are now ready to begin your session.</p>
                     <div className="completion-icon">🧘‍♂️</div>
                 </div>
-                <style jsx>{`
+                <style>{`
                     .meditation-timer {
                         display: flex;
                         flex-direction: column;
@@ -226,7 +226,7 @@ export const MeditationTimer: React.FC<MeditationTimerProps> = ({
                 </Button>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .meditation-timer {
                     display: flex;
                     flex-direction: column;

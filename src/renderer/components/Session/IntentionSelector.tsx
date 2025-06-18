@@ -87,7 +87,7 @@ export const IntentionSelector: React.FC<IntentionSelectorProps> = ({
                 </p>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .intention-selector {
                     width: 100%;
                 }

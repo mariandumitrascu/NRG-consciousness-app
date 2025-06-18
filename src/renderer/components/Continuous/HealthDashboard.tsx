@@ -55,7 +55,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         <div className="header-content">
           <h3>System Health</h3>
           <div className="last-check">
-            Last check: {health.lastCheck.toLocaleTimeString()}
+            Last check: {health.lastCheck ? health.lastCheck.toLocaleTimeString() : 'Never'}
           </div>
         </div>
         {onRefresh && (
@@ -138,13 +138,13 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <div
                   className="progress-fill"
                   style={{
-                    width: `${Math.min(health.memoryUsage, 100)}%`,
-                    backgroundColor: health.memoryUsage > 80 ? '#ef4444' :
-                                   health.memoryUsage > 60 ? '#f59e0b' : '#10b981'
+                    width: `${Math.min(health.memoryUsage?.current ?? 0, 100)}%`,
+                    backgroundColor: (health.memoryUsage?.current ?? 0) > 80 ? '#ef4444' :
+                                   (health.memoryUsage?.current ?? 0) > 60 ? '#f59e0b' : '#10b981'
                   }}
                 ></div>
               </div>
-              <span className="metric-text">{health.memoryUsage.toFixed(1)}%</span>
+              <span className="metric-text">{(health.memoryUsage?.current ?? 0).toFixed(1)}%</span>
             </div>
           </div>
 
@@ -174,7 +174,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         </div>
         <div className="summary-item">
           <span className="summary-label">Last Health Check</span>
-          <span className="summary-value">{health.lastCheck.toLocaleString()}</span>
+          <span className="summary-value">{health.lastCheck ? health.lastCheck.toLocaleString() : 'Never'}</span>
         </div>
       </div>
 

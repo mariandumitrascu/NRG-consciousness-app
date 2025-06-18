@@ -33,7 +33,8 @@ export const ContinuousView: React.FC = () => {
         endIntentionPeriod,
         updateIntentionNotes,
         getTimelineData,
-        getSignificantEvents
+        getSignificantEvents,
+        error
     } = useContinuousManager();
 
     const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>({
@@ -46,6 +47,7 @@ export const ContinuousView: React.FC = () => {
     const [timelineData, setTimelineData] = useState<any[]>([]);
     const [significantEvents, setSignificantEvents] = useState<SignificantEvent[]>([]);
     const [showTimeline, setShowTimeline] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
     /**
      * Load timeline data when time range changes
@@ -69,6 +71,15 @@ export const ContinuousView: React.FC = () => {
         const interval = setInterval(loadTimelineData, 30000);
         return () => clearInterval(interval);
     }, [selectedTimeRange, getTimelineData, getSignificantEvents]);
+
+    /**
+     * Set loading to false when status is available
+     */
+    useEffect(() => {
+        if (status !== null) {
+            setIsLoading(false);
+        }
+    }, [status]);
 
     /**
      * Handle starting a new intention period
@@ -142,7 +153,7 @@ export const ContinuousView: React.FC = () => {
                     <span className="status-label">{statusText}</span>
                     {isCollecting && status && (
                         <span className="status-details">
-                            {status.currentRate.toFixed(2)} trials/sec • {status.totalTrials} trials today
+                            {status.currentRate.toFixed(2)} trials/sec • {status.totalTrials} total trials
                         </span>
                     )}
                 </div>
@@ -165,7 +176,7 @@ export const ContinuousView: React.FC = () => {
             );
         }
 
-        const duration = Date.now() - currentPeriod.startTime.getTime();
+        const duration = currentPeriod.startTime ? Date.now() - currentPeriod.startTime.getTime() : 0;
         const durationText = formatDuration(duration);
         const intentionColor = currentPeriod.intention === 'high' ? '#2196F3' : '#FF9800';
 
@@ -181,6 +192,51 @@ export const ContinuousView: React.FC = () => {
             </div>
         );
     };
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="continuous-view">
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <div className="loading-text">Loading continuous monitoring...</div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="continuous-view">
+                <div className="error-container">
+                    <div className="error-icon">⚠️</div>
+                    <div className="error-text">
+                        <h2>Unable to Load Continuous Monitoring</h2>
+                        <p>{error}</p>
+                        <button onClick={() => window.location.reload()}>
+                            Reload Application
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show message if status is still null (shouldn't happen after loading)
+    if (!status) {
+        return (
+            <div className="continuous-view">
+                <div className="error-container">
+                    <div className="error-icon">🔄</div>
+                    <div className="error-text">
+                        <h2>Waiting for System Status</h2>
+                        <p>Please wait while the continuous monitoring system initializes...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="continuous-view">
@@ -248,7 +304,7 @@ export const ContinuousView: React.FC = () => {
                             <MonitorDashboard
                                 isCollecting={isCollecting}
                                 currentRate={status.currentRate}
-                                todayCount={status.todayStats.trialsCollected}
+                                todayCount={status.todayStats?.trialsCollected || 0}
                                 currentDeviation={0} // TODO: Calculate current deviation
                                 systemHealth={status.systemHealth}
                                 significantEvents={significantEvents}
@@ -271,7 +327,7 @@ export const ContinuousView: React.FC = () => {
                         <div className="timeline-section">
                             <ContinuousTimeline
                                 timeRange={selectedTimeRange}
-                                trials={timelineData}
+                                data={timelineData}
                                 intentionPeriods={status?.currentIntentionPeriod ? [status.currentIntentionPeriod] : []}
                                 significantEvents={significantEvents}
                                 onTimeRangeChange={handleTimeRangeChange}
@@ -285,7 +341,7 @@ export const ContinuousView: React.FC = () => {
             </div>
 
             {/* Styles */}
-            <style jsx>{`
+            <style>{`
                 .continuous-view {
                     min-height: 100vh;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -496,6 +552,76 @@ export const ContinuousView: React.FC = () => {
                 .timeline-section {
                     flex: 1;
                     min-height: 400px;
+                }
+
+                .loading-container,
+                .error-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    text-align: center;
+                    padding: 40px;
+                    color: white;
+                }
+
+                .loading-spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid rgba(255, 255, 255, 0.3);
+                    border-top: 4px solid white;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                }
+
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                .loading-text {
+                    font-size: 18px;
+                    color: rgba(255, 255, 255, 0.8);
+                }
+
+                .error-container {
+                    color: #ffcdd2;
+                }
+
+                .error-icon {
+                    font-size: 48px;
+                    margin-bottom: 20px;
+                }
+
+                .error-text h2 {
+                    margin: 0 0 15px 0;
+                    font-size: 24px;
+                    font-weight: 500;
+                }
+
+                .error-text p {
+                    margin: 0 0 25px 0;
+                    font-size: 16px;
+                    color: rgba(255, 255, 255, 0.7);
+                    max-width: 500px;
+                }
+
+                .error-text button {
+                    padding: 12px 24px;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .error-text button:hover {
+                    background: #d32f2f;
+                    transform: translateY(-2px);
                 }
 
                 /* Responsive design */

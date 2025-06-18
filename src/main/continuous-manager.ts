@@ -348,19 +348,40 @@ export class ContinuousDataCollector extends EventEmitter {
         const currentRate = this.getCurrentRate();
 
         return {
+            // Overall assessment for internal use
             status: this.getOverallStatus(),
+
+            // RNG specific health
             rngStatus: this.errorCount > 0 ? 'warning' : 'healthy',
+
+            // Data rate health relative to target
             dataRate: {
                 current: currentRate,
                 expected: this.config.targetRate,
                 status: Math.abs(currentRate - this.config.targetRate) < 0.1 ? 'healthy' : 'warning'
             },
+
+            // Database connectivity placeholder
             databaseStatus: 'healthy', // TODO: Implement database health checks
+
+            // Memory utilisation snapshot
             memoryUsage: {
                 current: currentMB,
                 peak: this.memoryPeak,
                 status: currentMB > 100 ? 'warning' : 'healthy'
             },
+
+            // New properties required by renderer components
+            lastCheck: new Date(),
+            overall: this.getOverallStatus(),
+            components: {
+                collector: this.isRunning ? 'healthy' : 'inactive',
+                analyzer: 'healthy',
+                database: 'healthy'
+            },
+            cpuUsage: 0, // TODO: Implement accurate CPU usage metrics
+
+            // Error and uptime metadata
             lastError: this.lastError,
             uptime: this.startTime ? Date.now() - this.startTime.getTime() : 0,
             missedTrials: this.missedIntervals

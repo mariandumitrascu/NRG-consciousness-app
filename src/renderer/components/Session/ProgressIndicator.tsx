@@ -159,7 +159,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .progress-indicator {
                     width: 100%;
                     color: rgba(255, 255, 255, 0.9);
